@@ -2,9 +2,11 @@ package database
 
 import (
 	"database/sql"
+	"inventario/backend/internal/config"
 	"os"
 
 	_ "github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var DB *sql.DB
@@ -31,7 +33,18 @@ func Init() error {
 }
 
 func migrate() error {
-	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS encargados (
+	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS users (
+		id            SERIAL PRIMARY KEY,
+		username      TEXT    NOT NULL UNIQUE,
+		password_hash TEXT    NOT NULL,
+		rol           TEXT    NOT NULL DEFAULT 'usuario',
+		activo        BOOLEAN NOT NULL DEFAULT TRUE
+	)`)
+	if err != nil {
+		return err
+	}
+
+	_, err = DB.Exec(`CREATE TABLE IF NOT EXISTS encargados (
 		id      SERIAL PRIMARY KEY,
 		nombre  TEXT    NOT NULL,
 		cargo   TEXT    NOT NULL DEFAULT '',
@@ -55,6 +68,20 @@ func migrate() error {
 }
 
 func seed() error {
+	// Seed usuario admin
+	var userCount int
+	DB.QueryRow("SELECT COUNT(*) FROM users").Scan(&userCount)
+	if userCount == 0 {
+		hash, err := bcrypt.GenerateFromPassword([]byte(config.AdminPassword), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		DB.Exec(
+			"INSERT INTO users (username, password_hash, rol) VALUES ($1, $2, 'admin')",
+			config.AdminUsername, string(hash),
+		)
+	}
+
 	var count int
 	if err := DB.QueryRow("SELECT COUNT(*) FROM encargados").Scan(&count); err != nil || count > 0 {
 		return err

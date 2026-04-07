@@ -5,9 +5,26 @@ import (
 	"inventario/backend/internal/database"
 	"inventario/backend/internal/models"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
+
+func validateItem(item *models.Item) string {
+	item.Name = strings.TrimSpace(item.Name)
+	item.Category = strings.TrimSpace(item.Category)
+	item.Location = strings.TrimSpace(item.Location)
+	if item.Name == "" || item.Category == "" || item.Location == "" {
+		return "nombre, categoría y ubicación son obligatorios"
+	}
+	if len(item.Name) > 200 {
+		return "nombre demasiado largo (máx 200 caracteres)"
+	}
+	if item.Quantity < 0 {
+		return "la cantidad no puede ser negativa"
+	}
+	return ""
+}
 
 const selectItems = `
 	SELECT i.id, i.name, i.category, i.quantity, i.location, i.details,
@@ -79,8 +96,8 @@ func CreateItem(c *fiber.Ctx) error {
 	if err := c.BodyParser(&item); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "cuerpo de solicitud inválido"})
 	}
-	if item.Name == "" || item.Category == "" || item.Location == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "nombre, categoría y ubicación son obligatorios"})
+	if msg := validateItem(&item); msg != "" {
+		return c.Status(400).JSON(fiber.Map{"error": msg})
 	}
 
 	var encargadoID interface{} = nil
@@ -109,8 +126,8 @@ func UpdateItem(c *fiber.Ctx) error {
 	if err := c.BodyParser(&item); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "cuerpo de solicitud inválido"})
 	}
-	if item.Name == "" || item.Category == "" || item.Location == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "nombre, categoría y ubicación son obligatorios"})
+	if msg := validateItem(&item); msg != "" {
+		return c.Status(400).JSON(fiber.Map{"error": msg})
 	}
 
 	var encargadoID interface{} = nil

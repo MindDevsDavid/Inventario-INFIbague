@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const categories = [
   'Programas',
@@ -14,6 +14,13 @@ const categories = [
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const timeoutRef = useRef(null);
+  const navigate = useNavigate();
+  const isAdmin = sessionStorage.getItem('role') === 'admin';
+
+  const handleLogout = () => {
+    sessionStorage.clear();
+    navigate('/');
+  };
 
   const handleMouseEnter = () => {
     clearTimeout(timeoutRef.current);
@@ -69,11 +76,28 @@ const Navbar = () => {
             Encargados
           </Link>
 
+          {isAdmin && (
+            <Link
+              to="/usuarios"
+              className="inline-flex items-center rounded-full border border-surface/20 bg-surface px-4 py-2 text-sm font-medium text-slate-700"
+            >
+              Usuarios
+            </Link>
+          )}
+
           <button
             type="button"
             className="inline-flex items-center rounded-full border border-surface/20 bg-surface px-4 py-2 text-sm font-medium text-slate-700"
           >
             Soporte
+          </button>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="inline-flex items-center rounded-full border border-surface/20 bg-surface px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50 transition"
+          >
+            Cerrar sesión
           </button>
         </div>
       </div>

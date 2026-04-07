@@ -4,6 +4,7 @@ import (
 	"inventario/backend/internal/database"
 	"inventario/backend/internal/models"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -39,8 +40,14 @@ func CreateEncargado(c *fiber.Ctx) error {
 	if err := c.BodyParser(&e); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "cuerpo inválido"})
 	}
+	e.Nombre = strings.TrimSpace(e.Nombre)
+	e.Cargo = strings.TrimSpace(e.Cargo)
+	e.Email = strings.TrimSpace(e.Email)
 	if e.Nombre == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "el nombre es obligatorio"})
+	}
+	if len(e.Nombre) > 150 {
+		return c.Status(400).JSON(fiber.Map{"error": "nombre demasiado largo (máx 150 caracteres)"})
 	}
 
 	err := database.DB.QueryRow(
@@ -65,8 +72,14 @@ func UpdateEncargado(c *fiber.Ctx) error {
 	if err := c.BodyParser(&e); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "cuerpo inválido"})
 	}
+	e.Nombre = strings.TrimSpace(e.Nombre)
+	e.Cargo = strings.TrimSpace(e.Cargo)
+	e.Email = strings.TrimSpace(e.Email)
 	if e.Nombre == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "el nombre es obligatorio"})
+	}
+	if len(e.Nombre) > 150 {
+		return c.Status(400).JSON(fiber.Map{"error": "nombre demasiado largo (máx 150 caracteres)"})
 	}
 
 	res, err := database.DB.Exec(

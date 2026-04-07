@@ -1,41 +1,71 @@
 package main
 
 import (
+	"inventario/backend/internal/config"
 	"inventario/backend/internal/database"
 	"inventario/backend/internal/handlers"
+	"inventario/backend/internal/middleware"
 	"log"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
+	appCors "github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 func main() {
+	config.Load()
+
 	if err := database.Init(); err != nil {
 		log.Fatal("Error iniciando base de datos:", err)
 	}
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: 1 * 1024 * 1024, // 1 MB máximo por request
+	})
 
+	app.Use(helmet.New())
 	app.Use(logger.New())
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
+	app.Use(appCors.New(appCors.Config{
+		AllowOrigins: config.CORSOrigin,
 		AllowMethods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-		AllowHeaders: "Content-Type",
+		AllowHeaders: "Content-Type,Authorization",
 	}))
 
 	api := app.Group("/api")
-	api.Get("/dashboard", handlers.GetDashboard)
-	api.Get("/items", handlers.GetItems)
-	api.Get("/items/:id", handlers.GetItem)
-	api.Post("/items", handlers.CreateItem)
-	api.Put("/items/:id", handlers.UpdateItem)
-	api.Delete("/items/:id", handlers.DeleteItem)
 
-	api.Get("/encargados", handlers.GetEncargados)
-	api.Post("/encargados", handlers.CreateEncargado)
-	api.Put("/encargados/:id", handlers.UpdateEncargado)
-	api.Patch("/encargados/:id/toggle", handlers.ToggleEncargado)
+	// Login con rate limit
+	api.Post("/auth/login", limiter.New(limiter.Config{
+		Max:        10,
+		Expiration: 1 * time.Minute,
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(429).JSON(fiber.Map{"error": "demasiados intentos, espera un momento"})
+		},
+	}), handlers.Login)
+
+	// Rutas protegidas por JWT
+	protected := api.Group("", middleware.Protected())
+
+	protected.Get("/dashboard", handlers.GetDashboard)
+	protected.Get("/items", handlers.GetItems)
+	protected.Get("/items/:id", handlers.GetItem)
+	protected.Post("/items", handlers.CreateItem)
+	protected.Put("/items/:id", handlers.UpdateItem)
+	protected.Delete("/items/:id", handlers.DeleteItem)
+
+	protected.Get("/encargados", handlers.GetEncargados)
+	protected.Post("/encargados", handlers.CreateEncargado)
+	protected.Put("/encargados/:id", handlers.UpdateEncargado)
+	protected.Patch("/encargados/:id/toggle", handlers.ToggleEncargado)
+
+	// Gestión de usuarios — solo admins
+	admin := protected.Group("", middleware.AdminOnly())
+	admin.Get("/users", handlers.GetUsers)
+	admin.Post("/users", handlers.CreateUser)
+	admin.Put("/users/:id", handlers.UpdateUser)
+	admin.Patch("/users/:id/toggle", handlers.ToggleUser)
 
 	log.Println("Backend corriendo en http://localhost:8080")
 	log.Fatal(app.Listen(":8080"))

@@ -2,6 +2,35 @@ import axios from 'axios';
 
 const api = axios.create({ baseURL: 'http://localhost:8080/api' });
 
+// Adjunta el JWT en cada request
+api.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem('token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// Si el servidor devuelve 401, limpia la sesión y redirige al login
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      sessionStorage.removeItem('token');
+      window.location.href = '/';
+    }
+    return Promise.reject(err);
+  }
+);
+
+// Auth
+export const login = (username, password) =>
+  api.post('/auth/login', { username, password }).then((r) => r.data);
+
+// Users (solo admin)
+export const getUsers = () => api.get('/users').then((r) => r.data);
+export const createUser = (data) => api.post('/users', data).then((r) => r.data);
+export const updateUser = (id, data) => api.put(`/users/${id}`, data).then((r) => r.data);
+export const toggleUser = (id) => api.patch(`/users/${id}/toggle`).then((r) => r.data);
+
 // Items
 export const getItems = (category) =>
   api.get('/items', { params: category ? { category } : {} }).then((r) => r.data);
