@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CATEGORY_FIELDS } from '../config/categoryFields';
-import { createItem, updateItem } from '../services/api';
+import { createItem, updateItem, getEncargados } from '../services/api';
 
 const INPUT_CLASS =
   'w-full rounded-xl border border-slate-200 px-4 py-2 text-sm outline-none focus:border-[#033c63] transition';
@@ -13,14 +13,17 @@ export default function ItemModal({ category, item = null, onClose, onSaved }) {
     name: item?.name || '',
     quantity: item?.quantity ?? 0,
     location: item?.location || '',
+    encargado_id: item?.encargado_id ?? '',
     ...Object.fromEntries(fields.map((f) => [f.key, item?.details?.[f.key] || ''])),
   });
 
   const [form, setForm] = useState(buildForm);
+  const [encargados, setEncargados] = useState([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { setForm(buildForm()); }, [category, item]);
+  useEffect(() => { getEncargados().then(setEncargados).catch(console.error); }, []);
 
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -39,6 +42,7 @@ export default function ItemModal({ category, item = null, onClose, onSaved }) {
       quantity: parseInt(form.quantity) || 0,
       location: form.location,
       details,
+      encargado_id: form.encargado_id ? parseInt(form.encargado_id) : null,
     };
 
     try {
@@ -106,6 +110,21 @@ export default function ItemModal({ category, item = null, onClose, onSaved }) {
                 )}
               </div>
             ))}
+
+            {/* Encargado */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Encargado</label>
+              <select
+                value={form.encargado_id}
+                onChange={(e) => set('encargado_id', e.target.value)}
+                className={INPUT_CLASS}
+              >
+                <option value="">— Sin asignar —</option>
+                {encargados.map((enc) => (
+                  <option key={enc.id} value={enc.id}>{enc.nombre} {enc.cargo ? `— ${enc.cargo}` : ''}</option>
+                ))}
+              </select>
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>

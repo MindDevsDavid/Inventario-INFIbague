@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"inventario/backend/internal/database"
 	"inventario/backend/internal/models"
 	"strconv"
@@ -8,12 +9,24 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+const selectItems = `
+	SELECT i.id, i.name, i.category, i.quantity, i.location, i.details,
+	       i.encargado_id, COALESCE(e.nombre, '') as encargado
+	FROM items i
+	LEFT JOIN encargados e ON e.id = i.encargado_id`
+
 func scanItem(row interface{ Scan(...any) error }) (models.Item, error) {
 	var item models.Item
 	var details string
-	err := row.Scan(&item.ID, &item.Name, &item.Category, &item.Quantity, &item.Location, &details)
+	var encargadoID sql.NullInt64
+	err := row.Scan(&item.ID, &item.Name, &item.Category, &item.Quantity,
+		&item.Location, &details, &encargadoID, &item.Encargado)
 	if err == nil {
 		item.DetailsFromJSON(details)
+		if encargadoID.Valid {
+			id := int(encargadoID.Int64)
+			item.EncargadoID = &id
+		}
 	}
 	return item, err
 }
@@ -21,14 +34,13 @@ func scanItem(row interface{ Scan(...any) error }) (models.Item, error) {
 // GET /api/items?category=xxx
 func GetItems(c *fiber.Ctx) error {
 	category := c.Query("category")
-
-	query := "SELECT id, name, category, quantity, location, details FROM items"
+	query := selectItems
 	args := []any{}
 	if category != "" {
-		query += " WHERE category = ?"
+		query += " WHERE i.category = ?"
 		args = append(args, category)
 	}
-	query += " ORDER BY id ASC"
+	query += " ORDER BY i.id ASC"
 
 	rows, err := database.DB.Query(query, args...)
 	if err != nil {
@@ -53,10 +65,7 @@ func GetItem(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
 	}
-
-	row := database.DB.QueryRow(
-		"SELECT id, name, category, quantity, location, details FROM items WHERE id = ?", id,
-	)
+	row := database.DB.QueryRow(selectItems+" WHERE i.id = ?", id)
 	item, err := scanItem(row)
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "item no encontrado"})
@@ -74,14 +83,18 @@ func CreateItem(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "nombre, categoría y ubicación son obligatorios"})
 	}
 
+	var encargadoID interface{} = nil
+	if item.EncargadoID != nil {
+		encargadoID = *item.EncargadoID
+	}
+
 	result, err := database.DB.Exec(
-		"INSERT INTO items (name, category, quantity, location, details) VALUES (?, ?, ?, ?, ?)",
-		item.Name, item.Category, item.Quantity, item.Location, item.DetailsToJSON(),
+		"INSERT INTO items (name, category, quantity, location, details, encargado_id) VALUES (?, ?, ?, ?, ?, ?)",
+		item.Name, item.Category, item.Quantity, item.Location, item.DetailsToJSON(), encargadoID,
 	)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-
 	id, _ := result.LastInsertId()
 	item.ID = int(id)
 	return c.Status(201).JSON(item)
@@ -93,7 +106,6 @@ func UpdateItem(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
 	}
-
 	var item models.Item
 	if err := c.BodyParser(&item); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "cuerpo de solicitud inválido"})
@@ -102,9 +114,14 @@ func UpdateItem(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "nombre, categoría y ubicación son obligatorios"})
 	}
 
+	var encargadoID interface{} = nil
+	if item.EncargadoID != nil {
+		encargadoID = *item.EncargadoID
+	}
+
 	res, err := database.DB.Exec(
-		"UPDATE items SET name=?, category=?, quantity=?, location=?, details=? WHERE id=?",
-		item.Name, item.Category, item.Quantity, item.Location, item.DetailsToJSON(), id,
+		"UPDATE items SET name=?, category=?, quantity=?, location=?, details=?, encargado_id=? WHERE id=?",
+		item.Name, item.Category, item.Quantity, item.Location, item.DetailsToJSON(), encargadoID, id,
 	)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
@@ -113,7 +130,6 @@ func UpdateItem(c *fiber.Ctx) error {
 	if affected == 0 {
 		return c.Status(404).JSON(fiber.Map{"error": "item no encontrado"})
 	}
-
 	item.ID = id
 	return c.JSON(item)
 }
@@ -124,7 +140,6 @@ func DeleteItem(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
 	}
-
 	res, err := database.DB.Exec("DELETE FROM items WHERE id = ?", id)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})

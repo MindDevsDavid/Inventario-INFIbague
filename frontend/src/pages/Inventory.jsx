@@ -85,6 +85,7 @@ const Inventory = () => {
                     ))}
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Cantidad</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ubicación</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Encargado</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
                   </tr>
                 </thead>
@@ -110,6 +111,7 @@ const Inventory = () => {
                       ))}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.quantity}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.location}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.encargado || '—'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex gap-2">
                           <button

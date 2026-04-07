@@ -3,12 +3,14 @@ package models
 import "encoding/json"
 
 type Item struct {
-	ID       int                    `json:"id"`
-	Name     string                 `json:"name"`
-	Category string                 `json:"category"`
-	Quantity int                    `json:"quantity"`
-	Location string                 `json:"location"`
-	Details  map[string]interface{} `json:"details"`
+	ID          int                    `json:"id"`
+	Name        string                 `json:"name"`
+	Category    string                 `json:"category"`
+	Quantity    int                    `json:"quantity"`
+	Location    string                 `json:"location"`
+	Details     map[string]interface{} `json:"details"`
+	EncargadoID *int                   `json:"encargado_id"`
+	Encargado   string                 `json:"encargado"`
 }
 
 func (i *Item) DetailsToJSON() string {

@@ -62,6 +62,13 @@ const Navbar = () => {
             )}
           </div>
 
+          <Link
+            to="/encargados"
+            className="inline-flex items-center rounded-full border border-surface/20 bg-surface px-4 py-2 text-sm font-medium text-slate-700"
+          >
+            Encargados
+          </Link>
+
           <button
             type="button"
             className="inline-flex items-center rounded-full border border-surface/20 bg-surface px-4 py-2 text-sm font-medium text-slate-700"

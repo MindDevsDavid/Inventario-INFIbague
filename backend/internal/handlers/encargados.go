@@ -1,0 +1,112 @@
+package handlers
+
+import (
+	"inventario/backend/internal/database"
+	"inventario/backend/internal/models"
+	"strconv"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+// GET /api/encargados?all=1  (all=1 incluye inactivos)
+func GetEncargados(c *fiber.Ctx) error {
+	query := "SELECT id, nombre, cargo, email, activo FROM encargados"
+	if c.Query("all") != "1" {
+		query += " WHERE activo = 1"
+	}
+	query += " ORDER BY nombre ASC"
+
+	rows, err := database.DB.Query(query)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	defer rows.Close()
+
+	list := []models.Encargado{}
+	for rows.Next() {
+		var e models.Encargado
+		var activo int
+		if err := rows.Scan(&e.ID, &e.Nombre, &e.Cargo, &e.Email, &activo); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		e.Activo = activo == 1
+		list = append(list, e)
+	}
+	return c.JSON(list)
+}
+
+// POST /api/encargados
+func CreateEncargado(c *fiber.Ctx) error {
+	var e models.Encargado
+	if err := c.BodyParser(&e); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "cuerpo inválido"})
+	}
+	if e.Nombre == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "el nombre es obligatorio"})
+	}
+
+	res, err := database.DB.Exec(
+		"INSERT INTO encargados (nombre, cargo, email, activo) VALUES (?, ?, ?, 1)",
+		e.Nombre, e.Cargo, e.Email,
+	)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	id, _ := res.LastInsertId()
+	e.ID = int(id)
+	e.Activo = true
+	return c.Status(201).JSON(e)
+}
+
+// PUT /api/encargados/:id
+func UpdateEncargado(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
+	}
+
+	var e models.Encargado
+	if err := c.BodyParser(&e); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "cuerpo inválido"})
+	}
+	if e.Nombre == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "el nombre es obligatorio"})
+	}
+
+	res, err := database.DB.Exec(
+		"UPDATE encargados SET nombre=?, cargo=?, email=? WHERE id=?",
+		e.Nombre, e.Cargo, e.Email, id,
+	)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	affected, _ := res.RowsAffected()
+	if affected == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "encargado no encontrado"})
+	}
+	e.ID = id
+	return c.JSON(e)
+}
+
+// PATCH /api/encargados/:id/toggle  — activa o desactiva
+func ToggleEncargado(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
+	}
+
+	res, err := database.DB.Exec(
+		"UPDATE encargados SET activo = CASE WHEN activo = 1 THEN 0 ELSE 1 END WHERE id = ?", id,
+	)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	affected, _ := res.RowsAffected()
+	if affected == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "encargado no encontrado"})
+	}
+
+	var activo int
+	database.DB.QueryRow("SELECT activo FROM encargados WHERE id = ?", id).Scan(&activo)
+	return c.JSON(fiber.Map{"id": id, "activo": activo == 1})
+}

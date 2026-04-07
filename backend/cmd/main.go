@@ -20,7 +20,7 @@ func main() {
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
-		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
+		AllowMethods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
 		AllowHeaders: "Content-Type",
 	}))
 
@@ -31,6 +31,11 @@ func main() {
 	api.Post("/items", handlers.CreateItem)
 	api.Put("/items/:id", handlers.UpdateItem)
 	api.Delete("/items/:id", handlers.DeleteItem)
+
+	api.Get("/encargados", handlers.GetEncargados)
+	api.Post("/encargados", handlers.CreateEncargado)
+	api.Put("/encargados/:id", handlers.UpdateEncargado)
+	api.Patch("/encargados/:id/toggle", handlers.ToggleEncargado)
 
 	log.Println("Backend corriendo en http://localhost:8080")
 	log.Fatal(app.Listen(":8080"))
