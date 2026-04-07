@@ -8,11 +8,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// GET /api/encargados?all=1  (all=1 incluye inactivos)
+// GET /api/encargados?all=1
 func GetEncargados(c *fiber.Ctx) error {
 	query := "SELECT id, nombre, cargo, email, activo FROM encargados"
 	if c.Query("all") != "1" {
-		query += " WHERE activo = 1"
+		query += " WHERE activo = true"
 	}
 	query += " ORDER BY nombre ASC"
 
@@ -25,11 +25,9 @@ func GetEncargados(c *fiber.Ctx) error {
 	list := []models.Encargado{}
 	for rows.Next() {
 		var e models.Encargado
-		var activo int
-		if err := rows.Scan(&e.ID, &e.Nombre, &e.Cargo, &e.Email, &activo); err != nil {
+		if err := rows.Scan(&e.ID, &e.Nombre, &e.Cargo, &e.Email, &e.Activo); err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 		}
-		e.Activo = activo == 1
 		list = append(list, e)
 	}
 	return c.JSON(list)
@@ -45,15 +43,13 @@ func CreateEncargado(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "el nombre es obligatorio"})
 	}
 
-	res, err := database.DB.Exec(
-		"INSERT INTO encargados (nombre, cargo, email, activo) VALUES (?, ?, ?, 1)",
+	err := database.DB.QueryRow(
+		"INSERT INTO encargados (nombre, cargo, email) VALUES ($1, $2, $3) RETURNING id",
 		e.Nombre, e.Cargo, e.Email,
-	)
+	).Scan(&e.ID)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-	id, _ := res.LastInsertId()
-	e.ID = int(id)
 	e.Activo = true
 	return c.Status(201).JSON(e)
 }
@@ -74,7 +70,7 @@ func UpdateEncargado(c *fiber.Ctx) error {
 	}
 
 	res, err := database.DB.Exec(
-		"UPDATE encargados SET nombre=?, cargo=?, email=? WHERE id=?",
+		"UPDATE encargados SET nombre=$1, cargo=$2, email=$3 WHERE id=$4",
 		e.Nombre, e.Cargo, e.Email, id,
 	)
 	if err != nil {
@@ -88,7 +84,7 @@ func UpdateEncargado(c *fiber.Ctx) error {
 	return c.JSON(e)
 }
 
-// PATCH /api/encargados/:id/toggle  — activa o desactiva
+// PATCH /api/encargados/:id/toggle
 func ToggleEncargado(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -96,7 +92,7 @@ func ToggleEncargado(c *fiber.Ctx) error {
 	}
 
 	res, err := database.DB.Exec(
-		"UPDATE encargados SET activo = CASE WHEN activo = 1 THEN 0 ELSE 1 END WHERE id = ?", id,
+		"UPDATE encargados SET activo = NOT activo WHERE id = $1", id,
 	)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
@@ -106,7 +102,7 @@ func ToggleEncargado(c *fiber.Ctx) error {
 		return c.Status(404).JSON(fiber.Map{"error": "encargado no encontrado"})
 	}
 
-	var activo int
-	database.DB.QueryRow("SELECT activo FROM encargados WHERE id = ?", id).Scan(&activo)
-	return c.JSON(fiber.Map{"id": id, "activo": activo == 1})
+	var activo bool
+	database.DB.QueryRow("SELECT activo FROM encargados WHERE id = $1", id).Scan(&activo)
+	return c.JSON(fiber.Map{"id": id, "activo": activo})
 }

@@ -37,7 +37,7 @@ func GetItems(c *fiber.Ctx) error {
 	query := selectItems
 	args := []any{}
 	if category != "" {
-		query += " WHERE i.category = ?"
+		query += " WHERE i.category = $1"
 		args = append(args, category)
 	}
 	query += " ORDER BY i.id ASC"
@@ -65,7 +65,7 @@ func GetItem(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
 	}
-	row := database.DB.QueryRow(selectItems+" WHERE i.id = ?", id)
+	row := database.DB.QueryRow(selectItems+" WHERE i.id = $1", id)
 	item, err := scanItem(row)
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "item no encontrado"})
@@ -88,15 +88,14 @@ func CreateItem(c *fiber.Ctx) error {
 		encargadoID = *item.EncargadoID
 	}
 
-	result, err := database.DB.Exec(
-		"INSERT INTO items (name, category, quantity, location, details, encargado_id) VALUES (?, ?, ?, ?, ?, ?)",
+	err := database.DB.QueryRow(
+		`INSERT INTO items (name, category, quantity, location, details, encargado_id)
+		 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
 		item.Name, item.Category, item.Quantity, item.Location, item.DetailsToJSON(), encargadoID,
-	)
+	).Scan(&item.ID)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-	id, _ := result.LastInsertId()
-	item.ID = int(id)
 	return c.Status(201).JSON(item)
 }
 
@@ -120,7 +119,8 @@ func UpdateItem(c *fiber.Ctx) error {
 	}
 
 	res, err := database.DB.Exec(
-		"UPDATE items SET name=?, category=?, quantity=?, location=?, details=?, encargado_id=? WHERE id=?",
+		`UPDATE items SET name=$1, category=$2, quantity=$3, location=$4, details=$5, encargado_id=$6
+		 WHERE id=$7`,
 		item.Name, item.Category, item.Quantity, item.Location, item.DetailsToJSON(), encargadoID, id,
 	)
 	if err != nil {
@@ -140,7 +140,7 @@ func DeleteItem(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
 	}
-	res, err := database.DB.Exec("DELETE FROM items WHERE id = ?", id)
+	res, err := database.DB.Exec("DELETE FROM items WHERE id = $1", id)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
