@@ -11,7 +11,7 @@ const Inventory = () => {
   const selectedCategory = searchParams.get('category');
 
   const role = sessionStorage.getItem('role');
-  const canAdd    = role === 'admin';
+  const canAdd    = role === 'admin' || role === 'operador';
   const canEdit   = role === 'admin' || role === 'operador';
   const canDelete = role === 'admin';
 

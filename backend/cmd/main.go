@@ -51,7 +51,7 @@ func main() {
 	protected.Get("/dashboard", handlers.GetDashboard)
 	protected.Get("/items", handlers.GetItems)
 	protected.Get("/items/:id", handlers.GetItem)
-	protected.Post("/items", middleware.AdminOnly(), handlers.CreateItem)
+	protected.Post("/items", middleware.AdminOrOperador(), handlers.CreateItem)
 	protected.Put("/items/:id", middleware.AdminOrOperador(), handlers.UpdateItem)
 	protected.Delete("/items/:id", middleware.AdminOnly(), handlers.DeleteItem)
 
