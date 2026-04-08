@@ -9,6 +9,7 @@ const categories = [
   'Licencias',
   'Monitores',
   'Impresoras',
+  'Escáneres',
 ];
 
 const Navbar = () => {

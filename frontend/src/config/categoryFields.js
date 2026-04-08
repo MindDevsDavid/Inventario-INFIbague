@@ -6,6 +6,7 @@ export const CATEGORIES = [
   'Licencias',
   'Monitores',
   'Impresoras',
+  'Escáneres',
 ];
 
 // Campos específicos de cada categoría (además de nombre, cantidad y ubicación que son comunes)
@@ -88,6 +89,21 @@ export const CATEGORY_FIELDS = {
     { key: 'fecha_compra',          label: 'Fecha de Compra',                 type: 'date',     required: true  },
     { key: 'tecnico_cargo',         label: 'Técnico a Cargo',                 type: 'text',     required: false, placeholder: 'Ej: Juan Pérez' },
     { key: 'encargado_alternativo', label: 'Nombre de Encargado Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
+    { key: 'comentarios',           label: 'Comentarios',                     type: 'textarea', required: false, placeholder: 'Observaciones adicionales...' },
+  ],
+  Escáneres: [
+    { key: 'placa',                 label: 'Placa',                           type: 'text',     required: true,  placeholder: 'Ej: INV-2024-001' },
+    { key: 'fabricante',            label: 'Fabricante',                      type: 'text',     required: true,  placeholder: 'Ej: Epson' },
+    { key: 'modelo',                label: 'Modelo',                          type: 'text',     required: true,  placeholder: 'Ej: WorkForce ES-400' },
+    { key: 'numero_serie',          label: 'Número de Serie',                 type: 'text',     required: true,  placeholder: 'Ej: EP-2024-001' },
+    { key: 'puertos',               label: 'Puertos',                         type: 'select',   required: true,  options: ['Serial', 'Paralelo', 'USB', 'Ethernet', 'Wifi'] },
+    { key: 'estado',                label: 'Estado',                          type: 'select',   required: true,  options: ['Excelente', 'Bueno', 'Funcional', 'Mal Estado'] },
+    { key: 'uso',                   label: 'Uso',                             type: 'select',   required: true,  options: ['Grupal', 'Local'] },
+    { key: 'valor_compra',          label: 'Valor de Compra',                 type: 'number',   required: true,  placeholder: 'Ej: 900000' },
+    { key: 'fecha_compra',          label: 'Fecha de Compra',                 type: 'date',     required: true  },
+    { key: 'tecnico_cargo',         label: 'Técnico a Cargo',                 type: 'text',     required: false, placeholder: 'Ej: Juan Pérez' },
+    { key: 'encargado_alternativo', label: 'Nombre de Encargado Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
+    { key: 'comentarios',           label: 'Comentarios',                     type: 'textarea', required: false, placeholder: 'Observaciones adicionales...' },
   ],
 };
 
@@ -99,4 +115,6 @@ export const CATEGORY_CONFIG = {
   Impresoras:   { hideQuantity: true, requireEncargado: true },
   UPSs:         { hideQuantity: true, requireEncargado: true },
   Telefonos:    { hideQuantity: true, requireEncargado: true },
+  Escáneres:    { hideQuantity: true, requireEncargado: true },
 };
+
