@@ -127,7 +127,6 @@ const Inventory = () => {
               <table className="w-full table-auto">
                 <thead className="bg-surface-soft">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">ID</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Nombre</th>
                     {!selectedCategory && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Categoría</th>
@@ -152,7 +151,6 @@ const Inventory = () => {
                   )}
                   {filtered.map((item) => (
                     <tr key={item.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-brand">{item.id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium">{item.name}</td>
                       {!selectedCategory && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.category}</td>
