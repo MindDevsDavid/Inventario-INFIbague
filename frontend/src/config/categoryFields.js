@@ -15,13 +15,18 @@ export const CATEGORY_FIELDS = {
     { key: 'fabricante', label: 'Fabricante', type: 'text', placeholder: 'Ej: Microsoft' },
   ],
   Computadores: [
-    { key: 'marca', label: 'Marca', type: 'text', placeholder: 'Ej: Dell' },
-    { key: 'modelo', label: 'Modelo', type: 'text', placeholder: 'Ej: XPS 13' },
-    { key: 'procesador', label: 'Procesador', type: 'text', placeholder: 'Ej: Intel Core i7' },
-    { key: 'ram', label: 'RAM', type: 'text', placeholder: 'Ej: 16 GB' },
-    { key: 'almacenamiento', label: 'Almacenamiento', type: 'text', placeholder: 'Ej: 512 GB SSD' },
-    { key: 'sistema_operativo', label: 'Sistema Operativo', type: 'text', placeholder: 'Ej: Windows 11' },
-    { key: 'numero_serie', label: 'Número de Serie', type: 'text', placeholder: 'Ej: DL-2024-001' },
+    { key: 'placa',                  label: 'Placa',                            type: 'text',     required: true,  placeholder: 'Ej: INV-2024-001' },
+    { key: 'tipo',                   label: 'Tipo de Computador',               type: 'select',   required: true,  options: ['PC', 'All In One', 'Portátil'] },
+    { key: 'fabricante',             label: 'Fabricante',                       type: 'text',     required: true,  placeholder: 'Ej: Dell' },
+    { key: 'modelo',                 label: 'Modelo',                           type: 'text',     required: true,  placeholder: 'Ej: Latitude 5420' },
+    { key: 'numero_serie',           label: 'Número de Serie',                  type: 'text',     required: true,  placeholder: 'Ej: DL-2024-001' },
+    { key: 'estado',                 label: 'Estado',                           type: 'select',   required: true,  options: ['Excelente', 'Bueno', 'Funcional', 'Mal Estado'] },
+    { key: 'red',                    label: 'Red',                              type: 'select',   required: true,  options: ['Ethernet', 'Wifi'] },
+    { key: 'valor_compra',           label: 'Valor de Compra',                  type: 'number',   required: true,  placeholder: 'Ej: 1500000' },
+    { key: 'fecha_compra',           label: 'Fecha de Compra',                  type: 'date',     required: true  },
+    { key: 'tecnico_cargo',          label: 'Técnico a Cargo',                  type: 'text',     required: false, placeholder: 'Ej: Juan Pérez' },
+    { key: 'encargado_alternativo',  label: 'Nombre de Encargado Alternativo',  type: 'text',     required: false, placeholder: 'Ej: María García' },
+    { key: 'comentarios',            label: 'Comentarios',                      type: 'textarea', required: false, placeholder: 'Observaciones adicionales...' },
   ],
   Telefonos: [
     { key: 'marca', label: 'Marca', type: 'text', placeholder: 'Ej: Samsung' },
@@ -61,4 +66,9 @@ export const CATEGORY_FIELDS = {
     },
     { key: 'ip', label: 'IP de Red', type: 'text', placeholder: 'Ej: 192.168.1.100' },
   ],
+};
+
+// Configuración por categoría: comportamiento del modal
+export const CATEGORY_CONFIG = {
+  Computadores: { hideQuantity: true, requireEncargado: true },
 };
