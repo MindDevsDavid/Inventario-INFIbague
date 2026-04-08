@@ -51,14 +51,14 @@ func main() {
 	protected.Get("/dashboard", handlers.GetDashboard)
 	protected.Get("/items", handlers.GetItems)
 	protected.Get("/items/:id", handlers.GetItem)
-	protected.Post("/items", handlers.CreateItem)
-	protected.Put("/items/:id", handlers.UpdateItem)
-	protected.Delete("/items/:id", handlers.DeleteItem)
+	protected.Post("/items", middleware.AdminOnly(), handlers.CreateItem)
+	protected.Put("/items/:id", middleware.AdminOrOperador(), handlers.UpdateItem)
+	protected.Delete("/items/:id", middleware.AdminOnly(), handlers.DeleteItem)
 
 	protected.Get("/encargados", handlers.GetEncargados)
-	protected.Post("/encargados", handlers.CreateEncargado)
-	protected.Put("/encargados/:id", handlers.UpdateEncargado)
-	protected.Patch("/encargados/:id/toggle", handlers.ToggleEncargado)
+	protected.Post("/encargados", middleware.AdminOnly(), handlers.CreateEncargado)
+	protected.Put("/encargados/:id", middleware.AdminOrOperador(), handlers.UpdateEncargado)
+	protected.Patch("/encargados/:id/toggle", middleware.AdminOrOperador(), handlers.ToggleEncargado)
 
 	// Gestión de usuarios — solo admins
 	admin := protected.Group("", middleware.AdminOnly())

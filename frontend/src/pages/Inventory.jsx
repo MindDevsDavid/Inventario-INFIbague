@@ -10,6 +10,11 @@ const Inventory = () => {
   const [searchParams] = useSearchParams();
   const selectedCategory = searchParams.get('category');
 
+  const role = sessionStorage.getItem('role');
+  const canAdd    = role === 'admin';
+  const canEdit   = role === 'admin' || role === 'operador';
+  const canDelete = role === 'admin';
+
   const [modal, setModal] = useState(null);   // { mode: 'add'|'edit', category, item? }
   const [confirmDelete, setConfirmDelete] = useState(null);
 
@@ -39,8 +44,7 @@ const Inventory = () => {
               Inventario {selectedCategory ? `— ${selectedCategory}` : ''}
             </h1>
 
-            {selectedCategory ? (
-              // Botón específico de la categoría filtrada
+            {canAdd && (selectedCategory ? (
               <button
                 onClick={() => setModal({ mode: 'add', category: selectedCategory })}
                 style={{ backgroundColor: '#033c63', color: '#fff' }}
@@ -49,7 +53,6 @@ const Inventory = () => {
                 + Agregar {selectedCategory}
               </button>
             ) : (
-              // Sin filtro: selector de categoría
               <div className="flex items-center gap-2">
                 <span className="text-sm text-slate-500">Agregar:</span>
                 <select
@@ -66,7 +69,7 @@ const Inventory = () => {
                   {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
-            )}
+            ))}
           </div>
 
           {/* Tabla */}
@@ -86,7 +89,9 @@ const Inventory = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Cantidad</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ubicación</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Encargado</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
+                    {(canEdit || canDelete) && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="bg-surface divide-y divide-surface-muted">
@@ -112,25 +117,31 @@ const Inventory = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.quantity}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.location}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.encargado || '—'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setModal({ mode: 'edit', category: item.category, item })}
-                            className="rounded-full border px-3 py-1 text-xs font-medium transition hover:text-white"
-                            style={{ borderColor: '#033c63', color: '#033c63' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#033c63'; e.currentTarget.style.color = '#fff'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = '#033c63'; }}
-                          >
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => setConfirmDelete(item.id)}
-                            className="rounded-full border border-red-400 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-500 hover:text-white transition"
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      </td>
+                      {(canEdit || canDelete) && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex gap-2">
+                            {canEdit && (
+                              <button
+                                onClick={() => setModal({ mode: 'edit', category: item.category, item })}
+                                className="rounded-full border px-3 py-1 text-xs font-medium transition hover:text-white"
+                                style={{ borderColor: '#033c63', color: '#033c63' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#033c63'; e.currentTarget.style.color = '#fff'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = '#033c63'; }}
+                              >
+                                Editar
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button
+                                onClick={() => setConfirmDelete(item.id)}
+                                className="rounded-full border border-red-400 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-500 hover:text-white transition"
+                              >
+                                Eliminar
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

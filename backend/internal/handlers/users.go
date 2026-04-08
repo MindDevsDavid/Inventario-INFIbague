@@ -50,7 +50,7 @@ func CreateUser(c *fiber.Ctx) error {
 	if len(body.Password) < 6 {
 		return c.Status(400).JSON(fiber.Map{"error": "la contraseña debe tener al menos 6 caracteres"})
 	}
-	if body.Rol != "admin" && body.Rol != "usuario" {
+	if body.Rol != "admin" && body.Rol != "operador" && body.Rol != "usuario" {
 		body.Rol = "usuario"
 	}
 
@@ -93,7 +93,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	if body.Username == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "el nombre de usuario es obligatorio"})
 	}
-	if body.Rol != "admin" && body.Rol != "usuario" {
+	if body.Rol != "admin" && body.Rol != "operador" && body.Rol != "usuario" {
 		body.Rol = "usuario"
 	}
 

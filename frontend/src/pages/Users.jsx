@@ -6,8 +6,9 @@ const EMPTY = { username: '', password: '', rol: 'usuario' };
 const INPUT = 'w-full rounded-xl border border-slate-200 px-4 py-2 text-sm outline-none focus:border-[#033c63] transition';
 
 const ROL_BADGE = {
-  admin:   'bg-purple-100 text-purple-700',
-  usuario: 'bg-blue-100 text-blue-700',
+  admin:    'bg-purple-100 text-purple-700',
+  operador: 'bg-amber-100 text-amber-700',
+  usuario:  'bg-blue-100 text-blue-700',
 };
 
 export default function Users() {
@@ -160,6 +161,7 @@ export default function Users() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Rol</label>
                 <select value={form.rol} onChange={(e) => set('rol', e.target.value)} className={INPUT}>
                   <option value="usuario">Usuario</option>
+                  <option value="operador">Operador</option>
                   <option value="admin">Administrador</option>
                 </select>
               </div>

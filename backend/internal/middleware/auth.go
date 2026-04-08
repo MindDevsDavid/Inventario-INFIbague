@@ -44,3 +44,18 @@ func AdminOnly() fiber.Handler {
 		return c.Next()
 	}
 }
+
+// AdminOrOperador permite el acceso a usuarios con rol "admin" u "operador".
+func AdminOrOperador() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		claims, ok := c.Locals("claims").(jwt.MapClaims)
+		if !ok {
+			return c.Status(403).JSON(fiber.Map{"error": "acceso denegado"})
+		}
+		role, _ := claims["role"].(string)
+		if role != "admin" && role != "operador" {
+			return c.Status(403).JSON(fiber.Map{"error": "acceso denegado — se requiere rol admin u operador"})
+		}
+		return c.Next()
+	}
+}

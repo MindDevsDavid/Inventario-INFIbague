@@ -13,6 +13,10 @@ export default function Encargados() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const role = sessionStorage.getItem('role');
+  const canAdd    = role === 'admin';
+  const canEdit   = role === 'admin' || role === 'operador';
+
   const fetch = () => getEncargados(true).then(setList).catch(console.error);
   useEffect(() => { fetch(); }, []);
 
@@ -55,13 +59,15 @@ export default function Encargados() {
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold text-brand">Encargados</h1>
-            <button
-              onClick={openAdd}
-              style={{ backgroundColor: '#033c63', color: '#fff' }}
-              className="rounded-full px-5 py-2 text-sm font-medium hover:opacity-90 transition"
-            >
-              + Nuevo encargado
-            </button>
+            {canAdd && (
+              <button
+                onClick={openAdd}
+                style={{ backgroundColor: '#033c63', color: '#fff' }}
+                className="rounded-full px-5 py-2 text-sm font-medium hover:opacity-90 transition"
+              >
+                + Nuevo encargado
+              </button>
+            )}
           </div>
 
           <div className="bg-surface rounded-3xl shadow-xl shadow-slate-200/60 overflow-hidden border border-surface-muted">
@@ -72,7 +78,9 @@ export default function Encargados() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Cargo</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
+                  {canEdit && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-surface divide-y divide-surface-muted">
@@ -97,29 +105,31 @@ export default function Encargados() {
                         {e.activo ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => openEdit(e)}
-                          className="rounded-full border px-3 py-1 text-xs font-medium transition"
-                          style={{ borderColor: '#033c63', color: '#033c63' }}
-                          onMouseEnter={(el) => { el.currentTarget.style.backgroundColor = '#033c63'; el.currentTarget.style.color = '#fff'; }}
-                          onMouseLeave={(el) => { el.currentTarget.style.backgroundColor = ''; el.currentTarget.style.color = '#033c63'; }}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => handleToggle(e.id)}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                            e.activo
-                              ? 'border-amber-400 text-amber-600 hover:bg-amber-500 hover:text-white'
-                              : 'border-green-400 text-green-600 hover:bg-green-500 hover:text-white'
-                          }`}
-                        >
-                          {e.activo ? 'Desactivar' : 'Activar'}
-                        </button>
-                      </div>
-                    </td>
+                    {canEdit && (
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => openEdit(e)}
+                            className="rounded-full border px-3 py-1 text-xs font-medium transition"
+                            style={{ borderColor: '#033c63', color: '#033c63' }}
+                            onMouseEnter={(el) => { el.currentTarget.style.backgroundColor = '#033c63'; el.currentTarget.style.color = '#fff'; }}
+                            onMouseLeave={(el) => { el.currentTarget.style.backgroundColor = ''; el.currentTarget.style.color = '#033c63'; }}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => handleToggle(e.id)}
+                            className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                              e.activo
+                                ? 'border-amber-400 text-amber-600 hover:bg-amber-500 hover:text-white'
+                                : 'border-green-400 text-green-600 hover:bg-green-500 hover:text-white'
+                            }`}
+                          >
+                            {e.activo ? 'Desactivar' : 'Activar'}
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
