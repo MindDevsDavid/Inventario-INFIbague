@@ -1,5 +1,4 @@
 export const CATEGORIES = [
-  'Programas',
   'Computadores',
   'Telefonos',
   'UPSs',
@@ -11,10 +10,6 @@ export const CATEGORIES = [
 
 // Campos específicos de cada categoría (además de nombre, cantidad y ubicación que son comunes)
 export const CATEGORY_FIELDS = {
-  Programas: [
-    { key: 'version', label: 'Versión', type: 'text', placeholder: 'Ej: 2021' },
-    { key: 'fabricante', label: 'Fabricante', type: 'text', placeholder: 'Ej: Microsoft' },
-  ],
   Computadores: [
     { key: 'placa',                  label: 'Placa',                            type: 'text',     required: true,  placeholder: 'Ej: INV-2024-001' },
     { key: 'tipo',                   label: 'Tipo de Computador',               type: 'select',   required: true,  options: ['PC', 'All In One', 'Portátil'] },
