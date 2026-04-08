@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { getEncargados, createEncargado, updateEncargado, toggleEncargado } from '../services/api';
 
@@ -14,8 +15,9 @@ export default function Encargados() {
   const [saving, setSaving] = useState(false);
 
   const role = sessionStorage.getItem('role');
-  const canAdd    = role === 'admin';
-  const canEdit   = role === 'admin' || role === 'operador';
+  const canAdd  = role === 'admin';
+  const canEdit = role === 'admin' || role === 'operador';
+  const navigate = useNavigate();
 
   const fetch = () => getEncargados(true).then(setList).catch(console.error);
   useEffect(() => { fetch(); }, []);
@@ -92,27 +94,29 @@ export default function Encargados() {
                   </tr>
                 )}
                 {list.map((e) => (
-                  <tr key={e.id} className={!e.activo ? 'opacity-50' : ''}>
+                  <tr
+                    key={e.id}
+                    onClick={() => navigate(`/encargados/${e.id}`)}
+                    className={`cursor-pointer transition hover:bg-slate-50 ${!e.activo ? 'opacity-50' : ''}`}
+                  >
                     <td className="px-6 py-4 text-sm font-medium text-slate-800">{e.nombre}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">{e.cargo || '—'}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">{e.email || '—'}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                        e.activo
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-slate-100 text-slate-500'
+                        e.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
                       }`}>
                         {e.activo ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
                     {canEdit && (
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" onClick={(ev) => ev.stopPropagation()}>
                         <div className="flex gap-2">
                           <button
                             onClick={() => openEdit(e)}
                             className="rounded-full border px-3 py-1 text-xs font-medium transition"
                             style={{ borderColor: '#033c63', color: '#033c63' }}
-                            onMouseEnter={(el) => { el.currentTarget.style.backgroundColor = '#033c63'; el.currentTarget.style.color = '#fff'; }}
+                            onMouseEnter={(el) => { el.currentTarget.style.backgroundColor = '#033c63'; el.currentTarget.style.color = '#033c63'; }}
                             onMouseLeave={(el) => { el.currentTarget.style.backgroundColor = ''; el.currentTarget.style.color = '#033c63'; }}
                           >
                             Editar

@@ -32,8 +32,12 @@ export const updateUser = (id, data) => api.put(`/users/${id}`, data).then((r) =
 export const toggleUser = (id) => api.patch(`/users/${id}/toggle`).then((r) => r.data);
 
 // Items
-export const getItems = (category) =>
-  api.get('/items', { params: category ? { category } : {} }).then((r) => r.data);
+export const getItems = (category, encargadoId) => {
+  const params = {};
+  if (category) params.category = category;
+  if (encargadoId) params.encargado_id = encargadoId;
+  return api.get('/items', { params }).then((r) => r.data);
+};
 
 export const createItem = (data) => api.post('/items', data).then((r) => r.data);
 

@@ -17,11 +17,14 @@ const Inventory = () => {
 
   const [modal, setModal] = useState(null);   // { mode: 'add'|'edit', category, item? }
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [search, setSearch] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
 
   const fetchItems = () =>
     getItems(selectedCategory).then(setItems).catch(console.error);
 
   useEffect(() => { fetchItems(); }, [selectedCategory]);
+  useEffect(() => { setSearch(''); setFilterCategory(''); }, [selectedCategory]);
 
   const handleDelete = async () => {
     await deleteItem(confirmDelete).catch(console.error);
@@ -31,6 +34,25 @@ const Inventory = () => {
 
   // Columnas específicas a mostrar según la categoría activa
   const extraFields = selectedCategory ? (CATEGORY_FIELDS[selectedCategory] || []) : [];
+
+  // Filtrado cliente: busca en todos los campos incluyendo details
+  const filtered = items.filter((item) => {
+    const catMatch = !filterCategory || item.category === filterCategory;
+    if (!catMatch) return false;
+    if (!search) return true;
+    const q = search.toLowerCase();
+    const detailValues = item.details ? Object.values(item.details).map(String) : [];
+    const haystack = [
+      String(item.id),
+      item.name,
+      item.category,
+      item.location,
+      item.encargado || '',
+      String(item.quantity),
+      ...detailValues,
+    ].join(' ').toLowerCase();
+    return haystack.includes(q);
+  });
 
   return (
     <div className="min-h-screen bg-surface-soft">
@@ -72,6 +94,35 @@ const Inventory = () => {
             ))}
           </div>
 
+          {/* Buscador y filtro */}
+          <div className="flex flex-wrap gap-3 mb-4">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nombre, marca, serie, ubicación..."
+              className="flex-1 min-w-[220px] rounded-full border border-slate-200 px-5 py-2 text-sm outline-none focus:border-[#033c63] transition bg-surface"
+            />
+            {!selectedCategory && (
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm outline-none focus:border-[#033c63] bg-surface"
+              >
+                <option value="">Todas las categorías</option>
+                {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            )}
+            {(search || filterCategory) && (
+              <button
+                onClick={() => { setSearch(''); setFilterCategory(''); }}
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-500 hover:bg-slate-100 transition"
+              >
+                Limpiar
+              </button>
+            )}
+          </div>
+
           {/* Tabla */}
           <div className="bg-surface rounded-3xl shadow-xl shadow-slate-200/60 overflow-hidden border border-surface-muted">
             <div className="overflow-x-auto">
@@ -95,14 +146,14 @@ const Inventory = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-surface divide-y divide-surface-muted">
-                  {items.length === 0 && (
+                  {filtered.length === 0 && (
                     <tr>
                       <td colSpan={20} className="px-6 py-8 text-center text-sm text-slate-400">
-                        No hay activos registrados.
+                        {search || filterCategory ? 'Sin resultados para la búsqueda.' : 'No hay activos registrados.'}
                       </td>
                     </tr>
                   )}
-                  {items.map((item) => (
+                  {filtered.map((item) => (
                     <tr key={item.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-brand">{item.id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.name}</td>

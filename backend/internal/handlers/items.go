@@ -48,14 +48,23 @@ func scanItem(row interface{ Scan(...any) error }) (models.Item, error) {
 	return item, err
 }
 
-// GET /api/items?category=xxx
+// GET /api/items?category=xxx&encargado_id=yyy
 func GetItems(c *fiber.Ctx) error {
 	category := c.Query("category")
+	encargadoID := c.Query("encargado_id")
 	query := selectItems
 	args := []any{}
+	conditions := []string{}
 	if category != "" {
-		query += " WHERE i.category = $1"
 		args = append(args, category)
+		conditions = append(conditions, "i.category = $"+strconv.Itoa(len(args)))
+	}
+	if encargadoID != "" {
+		args = append(args, encargadoID)
+		conditions = append(conditions, "i.encargado_id = $"+strconv.Itoa(len(args)))
+	}
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
 	query += " ORDER BY i.id ASC"
 
