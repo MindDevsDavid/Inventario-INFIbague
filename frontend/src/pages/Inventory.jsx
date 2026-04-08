@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ItemModal from '../components/ItemModal';
 import { getItems, deleteItem } from '../services/api';
-import { CATEGORIES, CATEGORY_FIELDS } from '../config/categoryFields';
+import { CATEGORIES } from '../config/categoryFields';
 
 const Inventory = () => {
   const [items, setItems] = useState([]);
@@ -32,8 +32,6 @@ const Inventory = () => {
     fetchItems();
   };
 
-  // Columnas específicas a mostrar según la categoría activa
-  const extraFields = selectedCategory ? (CATEGORY_FIELDS[selectedCategory] || []) : [];
 
   // Filtrado cliente: busca en todos los campos incluyendo details
   const filtered = items.filter((item) => {
@@ -134,12 +132,11 @@ const Inventory = () => {
                     {!selectedCategory && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Categoría</th>
                     )}
-                    {extraFields.map((f) => (
-                      <th key={f.key} className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{f.label}</th>
-                    ))}
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Cantidad</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ubicación</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Placa</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Fabricante</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Encargado</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Localización</th>
                     {(canEdit || canDelete) && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
                     )}
@@ -156,18 +153,24 @@ const Inventory = () => {
                   {filtered.map((item) => (
                     <tr key={item.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-brand">{item.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium">{item.name}</td>
                       {!selectedCategory && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.category}</td>
                       )}
-                      {extraFields.map((f) => (
-                        <td key={f.key} className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                          {item.details?.[f.key] || '—'}
-                        </td>
-                      ))}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.quantity}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.location}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.details?.placa || '—'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.details?.fabricante || '—'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {item.details?.estado ? (
+                          <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                            item.details.estado === 'Excelente' ? 'bg-green-100 text-green-700' :
+                            item.details.estado === 'Bueno'     ? 'bg-blue-100 text-blue-700' :
+                            item.details.estado === 'Funcional' ? 'bg-amber-100 text-amber-700' :
+                                                                   'bg-red-100 text-red-600'
+                          }`}>{item.details.estado}</span>
+                        ) : '—'}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.encargado || '—'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.location}</td>
                       {(canEdit || canDelete) && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex gap-2">
