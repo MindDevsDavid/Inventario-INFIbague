@@ -159,20 +159,6 @@ export default function ItemModal({ category, item = null, onClose, onSaved }) {
               />
             </div>
 
-            {/* Ubicación */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Localización <span className="text-red-500">*</span>
-              </label>
-              <input
-                required
-                value={form.location}
-                onChange={(e) => set('location', e.target.value)}
-                className={INPUT_CLASS}
-                placeholder="Ej: Oficina Central"
-              />
-            </div>
-
             {/* Encargado */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -184,7 +170,12 @@ export default function ItemModal({ category, item = null, onClose, onSaved }) {
               </label>
               <select
                 value={form.encargado_id}
-                onChange={(e) => set('encargado_id', e.target.value)}
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  set('encargado_id', selectedId);
+                  const enc = encargados.find((en) => String(en.id) === selectedId);
+                  set('location', enc?.cargo || '');
+                }}
                 className={INPUT_CLASS}
               >
                 <option value="">— Sin asignar —</option>
@@ -194,6 +185,20 @@ export default function ItemModal({ category, item = null, onClose, onSaved }) {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Ubicación — se llena automáticamente con la oficina del encargado */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Localización <span className="text-red-500">*</span>
+              </label>
+              <input
+                required
+                readOnly
+                value={form.location}
+                className={`${INPUT_CLASS} bg-slate-50 text-slate-500 cursor-not-allowed`}
+                placeholder="Se completa al seleccionar un encargado"
+              />
             </div>
 
             {/* Campos obligatorios de la categoría */}
