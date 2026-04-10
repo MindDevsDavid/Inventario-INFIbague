@@ -1,6 +1,6 @@
 # Inventario TI
 
-Sistema web para la gestión de activos tecnológicos de una organización. Permite registrar, editar y dar seguimiento a equipos, software y otros recursos de TI, asignándolos a encargados responsables.
+Sistema web para la gestión de activos tecnológicos y soporte técnico de una organización. Permite registrar, editar y dar seguimiento a equipos, software y otros recursos de TI, asignándolos a encargados responsables. Incluye un sistema de tickets de soporte con historial y comunicación entre usuarios y técnicos.
 
 ---
 
@@ -114,14 +114,14 @@ Inventario/
 │   └── internal/
 │       ├── config/              # Variables de entorno
 │       ├── database/            # Conexión y migraciones de PostgreSQL
-│       ├── handlers/            # Controladores HTTP (auth, items, encargados, users)
+│       ├── handlers/            # Controladores HTTP (auth, items, encargados, users, tickets)
 │       ├── middleware/          # JWT y control de roles
 │       └── models/              # Structs de datos
 ├── frontend/
 │   └── src/
-│       ├── components/          # Navbar, ItemModal, ProtectedRoute
+│       ├── components/          # Navbar, ItemModal, TicketModal, ProtectedRoute
 │       ├── config/              # Campos por categoría
-│       ├── pages/               # Dashboard, Inventory, Encargados, Users, Login
+│       ├── pages/               # Dashboard, Inventory, Encargados, Users, Support, TicketDetail, Login
 │       └── services/
 │           └── api.js           # Cliente Axios con interceptores
 ├── docker-compose.yml
@@ -132,12 +132,48 @@ Inventario/
 
 ## Roles de usuario
 
-| Rol | Permisos |
-|-----|---------|
-| `admin` | Acceso completo: activos, encargados y gestión de usuarios |
-| `usuario` | Acceso a activos y encargados (sin gestión de usuarios) |
+| Rol | Activos | Encargados | Usuarios | Soporte |
+|-----|---------|------------|----------|---------|
+| `admin` | CRUD completo | Editar, activar/desactivar | CRUD completo | Ve todos los tickets, asigna técnicos, cambia estado/urgencia |
+| `operador` | Crear, editar | Editar, activar/desactivar | — | Ve solo tickets asignados a él, cambia estado/urgencia (no puede reasignar técnico) |
+| `usuario` | Solo lectura | Solo lectura | — | Crea tickets, ve solo los suyos, envía comunicaciones |
 
 El usuario `admin` se crea automáticamente al iniciar el backend si no existe.
+
+Al crear un usuario se crea automáticamente su encargado vinculado. El campo **Oficina** determina qué activos puede ver cada usuario al crear un ticket.
+
+---
+
+## Sistema de soporte
+
+### Flujo de un ticket
+
+1. Un **usuario** crea una solicitud seleccionando tipo de incidencia, urgencia y opcionalmente un activo de su oficina.
+2. Un **admin** asigna el ticket a un técnico (operador).
+3. El **operador** gestiona el ticket: cambia estado y urgencia, agrega notas privadas o comunicaciones.
+4. El **usuario** puede ver el estado del ticket y enviar comunicaciones.
+
+### Estados de un ticket
+
+| Estado | Descripción |
+|--------|-------------|
+| Abierto | Recién creado, pendiente de atención |
+| En Proceso | Un técnico está trabajando en él |
+| Esperando respuesta | Se requiere información del usuario |
+| Esperando repuesto | En espera de un componente o recurso |
+| Resuelto | El problema fue solucionado |
+| Cerrado | Ticket finalizado |
+
+### Urgencias
+
+Baja, Media, Alta, Crítica.
+
+### Historial
+
+Cada ticket mantiene un historial automático de cambios (estado, urgencia, asignación de técnico) y permite dos tipos de mensajes:
+
+- **Comunicación**: visible para todos (usuario, operador, admin).
+- **Nota privada**: visible solo para operadores y admins.
 
 ---
 
@@ -145,19 +181,60 @@ El usuario `admin` se crea automáticamente al iniciar el backend si no existe.
 
 Base URL: `http://localhost:8080/api`
 
-| Método | Ruta | Descripción | Rol requerido |
-|--------|------|-------------|---------------|
+### Autenticación
+
+| Método | Ruta | Descripción | Acceso |
+|--------|------|-------------|--------|
 | POST | `/auth/login` | Iniciar sesión | Público |
+
+### Perfil
+
+| Método | Ruta | Descripción | Acceso |
+|--------|------|-------------|--------|
+| GET | `/me` | Datos del usuario autenticado | Autenticado |
+| GET | `/me/assets` | Activos de la oficina del usuario | Autenticado |
+
+### Activos
+
+| Método | Ruta | Descripción | Acceso |
+|--------|------|-------------|--------|
 | GET | `/items` | Listar activos | Autenticado |
-| POST | `/items` | Crear activo | Autenticado |
-| PUT | `/items/:id` | Editar activo | Autenticado |
-| DELETE | `/items/:id` | Eliminar activo | Autenticado |
+| GET | `/items/:id` | Detalle de un activo | Autenticado |
+| POST | `/items` | Crear activo | Admin / Operador |
+| PUT | `/items/:id` | Editar activo | Admin / Operador |
+| DELETE | `/items/:id` | Eliminar activo | Admin |
+
+### Encargados
+
+| Método | Ruta | Descripción | Acceso |
+|--------|------|-------------|--------|
 | GET | `/encargados` | Listar encargados | Autenticado |
-| POST | `/encargados` | Crear encargado | Autenticado |
-| PUT | `/encargados/:id` | Editar encargado | Autenticado |
-| PATCH | `/encargados/:id/toggle` | Activar/desactivar encargado | Autenticado |
+| PUT | `/encargados/:id` | Editar encargado | Admin / Operador |
+| PATCH | `/encargados/:id/toggle` | Activar/desactivar encargado | Admin / Operador |
+
+### Usuarios
+
+| Método | Ruta | Descripción | Acceso |
+|--------|------|-------------|--------|
 | GET | `/users` | Listar usuarios | Admin |
-| POST | `/users` | Crear usuario | Admin |
+| POST | `/users` | Crear usuario (+ encargado) | Admin |
 | PUT | `/users/:id` | Editar usuario | Admin |
 | PATCH | `/users/:id/toggle` | Activar/desactivar usuario | Admin |
+
+### Tickets de soporte
+
+| Método | Ruta | Descripción | Acceso |
+|--------|------|-------------|--------|
+| GET | `/tickets` | Listar tickets (filtrado por rol) | Autenticado |
+| GET | `/tickets/:id` | Detalle de un ticket | Autenticado (con restricción por rol) |
+| POST | `/tickets` | Crear ticket | Autenticado |
+| PUT | `/tickets/:id` | Actualizar estado/urgencia/técnico | Admin / Operador |
+| GET | `/tickets/:id/history` | Historial del ticket | Autenticado (con restricción por rol) |
+| POST | `/tickets/:id/notes` | Agregar nota o comunicación | Autenticado (con restricción por rol) |
+| GET | `/tecnicos` | Listar técnicos disponibles | Autenticado |
+
+### Dashboard
+
+| Método | Ruta | Descripción | Acceso |
+|--------|------|-------------|--------|
 | GET | `/dashboard` | Resumen por categoría | Autenticado |

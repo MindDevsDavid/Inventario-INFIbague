@@ -217,16 +217,22 @@ func scanTicket(row interface{ Scan(...any) error }) (models.Ticket, error) {
 
 // GET /api/tickets
 func GetTickets(c *fiber.Ctx) error {
-	_, username, role := getUserIDFromClaims(c)
+	userID, username, role := getUserIDFromClaims(c)
 
 	var rows *sql.Rows
 	var err error
 
-	if role == "usuario" {
+	switch role {
+	case "usuario":
 		rows, err = database.DB.Query(
 			ticketSelect+` WHERE u.username = $1 ORDER BY t.created_at DESC`, username,
 		)
-	} else {
+	case "operador":
+		// Operador solo ve tickets asignados a él
+		rows, err = database.DB.Query(
+			ticketSelect+` WHERE t.tecnico_id = $1 ORDER BY t.created_at DESC`, userID,
+		)
+	default: // admin
 		rows, err = database.DB.Query(ticketSelect + ` ORDER BY t.created_at DESC`)
 	}
 	if err != nil {
@@ -262,6 +268,12 @@ func GetTicket(c *fiber.Ctx) error {
 	// Usuario solo puede ver su propio ticket
 	if role == "usuario" && t.UserID != userID {
 		return c.Status(403).JSON(fiber.Map{"error": "acceso denegado"})
+	}
+	// Operador solo ve tickets asignados a él
+	if role == "operador" {
+		if t.TecnicoID == nil || *t.TecnicoID != userID {
+			return c.Status(403).JSON(fiber.Map{"error": "acceso denegado"})
+		}
 	}
 	return c.JSON(t)
 }
@@ -314,7 +326,7 @@ func UpdateTicket(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
 	}
 
-	userID, _, _ := getUserIDFromClaims(c)
+	userID, _, role := getUserIDFromClaims(c)
 
 	var body struct {
 		Estado    string `json:"estado"`
@@ -323,6 +335,18 @@ func UpdateTicket(c *fiber.Ctx) error {
 	}
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "datos inválidos"})
+	}
+
+	// Operador no puede cambiar el técnico asignado
+	if role == "operador" {
+		var currentTecnicoID sql.NullInt64
+		database.DB.QueryRow("SELECT tecnico_id FROM tickets WHERE id=$1", id).Scan(&currentTecnicoID)
+		// Verificar que el ticket está asignado a este operador
+		if !currentTecnicoID.Valid || int(currentTecnicoID.Int64) != userID {
+			return c.Status(403).JSON(fiber.Map{"error": "acceso denegado"})
+		}
+		// Forzar que el técnico no cambie
+		body.TecnicoID = &userID
 	}
 
 	if !validEstados[body.Estado] {
@@ -399,11 +423,17 @@ func GetTicketHistory(c *fiber.Ctx) error {
 
 	userID, _, role := getUserIDFromClaims(c)
 
-	// Usuario solo puede ver historial de su propio ticket
+	// Verificar acceso al ticket
 	if role == "usuario" {
 		var ticketOwner int
 		database.DB.QueryRow("SELECT user_id FROM tickets WHERE id=$1", id).Scan(&ticketOwner)
 		if ticketOwner != userID {
+			return c.Status(403).JSON(fiber.Map{"error": "acceso denegado"})
+		}
+	} else if role == "operador" {
+		var tecnicoID sql.NullInt64
+		database.DB.QueryRow("SELECT tecnico_id FROM tickets WHERE id=$1", id).Scan(&tecnicoID)
+		if !tecnicoID.Valid || int(tecnicoID.Int64) != userID {
 			return c.Status(403).JSON(fiber.Map{"error": "acceso denegado"})
 		}
 	}
@@ -462,13 +492,18 @@ func AddTicketNote(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "el contenido es obligatorio"})
 	}
 
-	// Usuario solo puede agregar comunicaciones (no notas privadas)
+	// Verificar acceso al ticket
 	if role == "usuario" {
 		body.Tipo = "comunicacion"
-		// Verificar que sea su ticket
 		var ticketOwner int
 		database.DB.QueryRow("SELECT user_id FROM tickets WHERE id=$1", id).Scan(&ticketOwner)
 		if ticketOwner != userID {
+			return c.Status(403).JSON(fiber.Map{"error": "acceso denegado"})
+		}
+	} else if role == "operador" {
+		var tecnicoID sql.NullInt64
+		database.DB.QueryRow("SELECT tecnico_id FROM tickets WHERE id=$1", id).Scan(&tecnicoID)
+		if !tecnicoID.Valid || int(tecnicoID.Int64) != userID {
 			return c.Status(403).JSON(fiber.Map{"error": "acceso denegado"})
 		}
 	}

@@ -56,6 +56,7 @@ export default function TicketDetail() {
   const navigate = useNavigate();
   const role = sessionStorage.getItem('role');
   const isOperator = role === 'operador' || role === 'admin';
+  const isAdmin = role === 'admin';
 
   const [ticket, setTicket] = useState(null);
   const [history, setHistory] = useState([]);
@@ -77,7 +78,7 @@ export default function TicketDetail() {
     Promise.all([
       getTicket(id),
       getTicketHistory(id),
-      ...(isOperator ? [getTecnicos()] : []),
+      ...(isAdmin ? [getTecnicos()] : []),
     ]).then(([t, h, tecs]) => {
       setTicket(t);
       setHistory(h);
@@ -214,13 +215,15 @@ export default function TicketDetail() {
                           {URGENCIAS.map((u) => <option key={u}>{u}</option>)}
                         </select>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Técnico asignado</label>
-                        <select value={editTecnico} onChange={(e) => setEditTecnico(e.target.value)} className={INPUT}>
-                          <option value="">Sin asignar</option>
-                          {tecnicos.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
-                        </select>
-                      </div>
+                      {isAdmin && (
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500 mb-1">Técnico asignado</label>
+                          <select value={editTecnico} onChange={(e) => setEditTecnico(e.target.value)} className={INPUT}>
+                            <option value="">Sin asignar</option>
+                            {tecnicos.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+                          </select>
+                        </div>
+                      )}
                       <button
                         onClick={handleSaveChanges}
                         disabled={!hasChanges || saving}
