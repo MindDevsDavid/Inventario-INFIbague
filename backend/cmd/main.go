@@ -52,8 +52,12 @@ func main() {
 	protected.Get("/me/assets", handlers.GetMyAssets)
 
 	protected.Get("/tickets", handlers.GetTickets)
+	protected.Get("/tickets/:id", handlers.GetTicket)
 	protected.Post("/tickets", handlers.CreateTicket)
 	protected.Put("/tickets/:id", middleware.AdminOrOperador(), handlers.UpdateTicket)
+	protected.Get("/tickets/:id/history", handlers.GetTicketHistory)
+	protected.Post("/tickets/:id/notes", handlers.AddTicketNote)
+	protected.Get("/tecnicos", handlers.GetTecnicos)
 
 	protected.Get("/dashboard", handlers.GetDashboard)
 	protected.Get("/items", handlers.GetItems)

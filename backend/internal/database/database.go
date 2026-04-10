@@ -81,9 +81,25 @@ func migrate() error {
 		item_id         INTEGER     REFERENCES items(id) ON DELETE SET NULL,
 		user_id         INTEGER     NOT NULL REFERENCES users(id),
 		tecnico_id      INTEGER     REFERENCES users(id),
-		notas           TEXT        NOT NULL DEFAULT '',
 		created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 		updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	)`)
+	if err != nil {
+		return err
+	}
+
+	// Quitar columna notas si existe (migrada a ticket_history)
+	DB.Exec(`ALTER TABLE tickets DROP COLUMN IF EXISTS notas`)
+
+	_, err = DB.Exec(`CREATE TABLE IF NOT EXISTS ticket_history (
+		id              SERIAL PRIMARY KEY,
+		ticket_id       INTEGER     NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+		user_id         INTEGER     NOT NULL REFERENCES users(id),
+		tipo            TEXT        NOT NULL,
+		contenido       TEXT        NOT NULL DEFAULT '',
+		valor_anterior  TEXT        NOT NULL DEFAULT '',
+		valor_nuevo     TEXT        NOT NULL DEFAULT '',
+		created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 	)`)
 	return err
 }
