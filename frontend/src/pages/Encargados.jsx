@@ -1,28 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { getEncargados, createEncargado, updateEncargado, toggleEncargado } from '../services/api';
+import { getEncargados, updateEncargado, toggleEncargado } from '../services/api';
 
 const EMPTY = { nombre: '', cargo: '', email: '' };
 const INPUT = 'w-full rounded-xl border border-slate-200 px-4 py-2 text-sm outline-none focus:border-[#033c63] transition';
 
 export default function Encargados() {
   const [list, setList] = useState([]);
-  const [modal, setModal] = useState(null); // null | 'add' | 'edit'
+  const [modal, setModal] = useState(null); // null | 'edit'
   const [form, setForm] = useState(EMPTY);
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   const role = sessionStorage.getItem('role');
-  const canAdd  = role === 'admin';
   const canEdit = role === 'admin' || role === 'operador';
   const navigate = useNavigate();
 
   const fetch = () => getEncargados(true).then(setList).catch(console.error);
   useEffect(() => { fetch(); }, []);
 
-  const openAdd = () => { setForm(EMPTY); setError(''); setModal('add'); };
   const openEdit = (e) => {
     setForm({ nombre: e.nombre, cargo: e.cargo, email: e.email });
     setEditId(e.id);
@@ -38,8 +36,7 @@ export default function Encargados() {
     setError('');
     setSaving(true);
     try {
-      if (modal === 'add') await createEncargado(form);
-      else await updateEncargado(editId, form);
+      await updateEncargado(editId, form);
       close();
       fetch();
     } catch (err) {
@@ -61,15 +58,6 @@ export default function Encargados() {
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold text-brand">Encargados</h1>
-            {canAdd && (
-              <button
-                onClick={openAdd}
-                style={{ backgroundColor: '#033c63', color: '#fff' }}
-                className="rounded-full px-5 py-2 text-sm font-medium hover:opacity-90 transition"
-              >
-                + Nuevo encargado
-              </button>
-            )}
           </div>
 
           <div className="bg-surface rounded-3xl shadow-xl shadow-slate-200/60 overflow-hidden border border-surface-muted">
@@ -77,7 +65,7 @@ export default function Encargados() {
               <thead className="bg-surface-soft">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Nombre</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Cargo</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Oficina</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
                   {canEdit && (
@@ -147,7 +135,7 @@ export default function Encargados() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
             <h2 className="text-xl font-bold mb-6" style={{ color: '#033c63' }}>
-              {modal === 'add' ? 'Nuevo encargado' : 'Editar encargado'}
+              Editar encargado
             </h2>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div>
@@ -156,9 +144,15 @@ export default function Encargados() {
                   className={INPUT} placeholder="Ej: Carlos Ramírez" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Cargo</label>
-                <input value={form.cargo} onChange={(e) => set('cargo', e.target.value)}
-                  className={INPUT} placeholder="Ej: Administrador TI" />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Oficina</label>
+                <select value={form.cargo} onChange={(e) => set('cargo', e.target.value)} className={INPUT}>
+                  <option value="">— Sin asignar —</option>
+                  <option>Gerencia</option>
+                  <option>Contabilidad</option>
+                  <option>Sistemas</option>
+                  <option>Recursos Humanos</option>
+                  <option>Soporte Técnico</option>
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
@@ -170,7 +164,7 @@ export default function Encargados() {
                 <button type="submit" disabled={saving}
                   style={{ backgroundColor: '#033c63', color: '#fff' }}
                   className="flex-1 rounded-full py-2 text-sm font-medium hover:opacity-90 transition disabled:opacity-60">
-                  {saving ? 'Guardando...' : modal === 'add' ? 'Crear' : 'Guardar cambios'}
+                  {saving ? 'Guardando...' : 'Guardar cambios'}
                 </button>
                 <button type="button" onClick={close}
                   className="flex-1 rounded-full border border-slate-200 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">

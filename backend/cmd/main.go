@@ -56,7 +56,6 @@ func main() {
 	protected.Delete("/items/:id", middleware.AdminOnly(), handlers.DeleteItem)
 
 	protected.Get("/encargados", handlers.GetEncargados)
-	protected.Post("/encargados", middleware.AdminOnly(), handlers.CreateEncargado)
 	protected.Put("/encargados/:id", middleware.AdminOrOperador(), handlers.UpdateEncargado)
 	protected.Patch("/encargados/:id/toggle", middleware.AdminOrOperador(), handlers.ToggleEncargado)
 

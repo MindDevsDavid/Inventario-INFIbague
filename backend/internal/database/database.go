@@ -55,6 +55,9 @@ func migrate() error {
 		return err
 	}
 
+	// Vincular encargados con users (migración idempotente)
+	_, _ = DB.Exec(`ALTER TABLE encargados ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) UNIQUE`)
+
 	_, err = DB.Exec(`CREATE TABLE IF NOT EXISTS items (
 		id           SERIAL PRIMARY KEY,
 		name         TEXT    NOT NULL,

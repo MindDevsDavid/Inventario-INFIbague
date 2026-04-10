@@ -11,11 +11,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// GET /api/users
+// GET /api/users — incluye datos del encargado vinculado
 func GetUsers(c *fiber.Ctx) error {
-	rows, err := database.DB.Query(
-		"SELECT id, username, rol, activo FROM users ORDER BY id ASC",
-	)
+	rows, err := database.DB.Query(`
+		SELECT u.id, u.username, u.rol, u.activo,
+		       COALESCE(e.nombre, ''), COALESCE(e.cargo, ''), COALESCE(e.email, ''),
+		       e.id
+		FROM users u
+		LEFT JOIN encargados e ON e.user_id = u.id
+		ORDER BY u.id ASC
+	`)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -24,28 +29,41 @@ func GetUsers(c *fiber.Ctx) error {
 	list := []models.User{}
 	for rows.Next() {
 		var u models.User
-		if err := rows.Scan(&u.ID, &u.Username, &u.Rol, &u.Activo); err != nil {
+		var encID *int
+		if err := rows.Scan(&u.ID, &u.Username, &u.Rol, &u.Activo,
+			&u.Nombre, &u.Cargo, &u.Email, &encID); err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 		}
+		u.EncargadoID = encID
 		list = append(list, u)
 	}
 	return c.JSON(list)
 }
 
-// POST /api/users
+// POST /api/users — crea usuario y su encargado vinculado automáticamente
 func CreateUser(c *fiber.Ctx) error {
 	var body struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 		Rol      string `json:"rol"`
+		Nombre   string `json:"nombre"`
+		Cargo    string `json:"cargo"`
+		Email    string `json:"email"`
 	}
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "datos inválidos"})
 	}
 
 	body.Username = strings.TrimSpace(body.Username)
+	body.Nombre = strings.TrimSpace(body.Nombre)
+	body.Cargo = strings.TrimSpace(body.Cargo)
+	body.Email = strings.TrimSpace(body.Email)
+
 	if body.Username == "" || body.Password == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "usuario y contraseña son obligatorios"})
+	}
+	if body.Nombre == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "el nombre completo es obligatorio"})
 	}
 	if len(body.Password) < 6 {
 		return c.Status(400).JSON(fiber.Map{"error": "la contraseña debe tener al menos 6 caracteres"})
@@ -70,10 +88,23 @@ func CreateUser(c *fiber.Ctx) error {
 		}
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
+
+	// Crear encargado vinculado
+	var encID int
+	database.DB.QueryRow(
+		"INSERT INTO encargados (nombre, cargo, email, user_id) VALUES ($1, $2, $3, $4) RETURNING id",
+		body.Nombre, body.Cargo, body.Email, u.ID,
+	).Scan(&encID)
+
+	u.Nombre = body.Nombre
+	u.Cargo = body.Cargo
+	u.Email = body.Email
+	u.EncargadoID = &encID
+
 	return c.Status(201).JSON(u)
 }
 
-// PUT /api/users/:id  — actualiza username, rol y opcionalmente contraseña
+// PUT /api/users/:id — actualiza usuario y encargado vinculado
 func UpdateUser(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -84,14 +115,24 @@ func UpdateUser(c *fiber.Ctx) error {
 		Username string `json:"username"`
 		Password string `json:"password"`
 		Rol      string `json:"rol"`
+		Nombre   string `json:"nombre"`
+		Cargo    string `json:"cargo"`
+		Email    string `json:"email"`
 	}
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "datos inválidos"})
 	}
 
 	body.Username = strings.TrimSpace(body.Username)
+	body.Nombre = strings.TrimSpace(body.Nombre)
+	body.Cargo = strings.TrimSpace(body.Cargo)
+	body.Email = strings.TrimSpace(body.Email)
+
 	if body.Username == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "el nombre de usuario es obligatorio"})
+	}
+	if body.Nombre == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "el nombre completo es obligatorio"})
 	}
 	if body.Rol != "admin" && body.Rol != "operador" && body.Rol != "usuario" {
 		body.Rol = "usuario"
@@ -114,9 +155,7 @@ func UpdateUser(c *fiber.Ctx) error {
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": "error procesando contraseña"})
 		}
-		database.DB.Exec(
-			"UPDATE users SET password_hash = $1 WHERE id = $2", string(hash), id,
-		)
+		database.DB.Exec("UPDATE users SET password_hash = $1 WHERE id = $2", string(hash), id)
 	}
 
 	res, err := database.DB.Exec(
@@ -134,10 +173,24 @@ func UpdateUser(c *fiber.Ctx) error {
 		return c.Status(404).JSON(fiber.Map{"error": "usuario no encontrado"})
 	}
 
+	// Actualizar encargado vinculado
+	database.DB.Exec(
+		"UPDATE encargados SET nombre=$1, cargo=$2, email=$3 WHERE user_id=$4",
+		body.Nombre, body.Cargo, body.Email, id,
+	)
+
 	var u models.User
-	database.DB.QueryRow(
-		"SELECT id, username, rol, activo FROM users WHERE id = $1", id,
-	).Scan(&u.ID, &u.Username, &u.Rol, &u.Activo)
+	var encID *int
+	database.DB.QueryRow(`
+		SELECT u.id, u.username, u.rol, u.activo,
+		       COALESCE(e.nombre, ''), COALESCE(e.cargo, ''), COALESCE(e.email, ''),
+		       e.id
+		FROM users u
+		LEFT JOIN encargados e ON e.user_id = u.id
+		WHERE u.id = $1
+	`, id).Scan(&u.ID, &u.Username, &u.Rol, &u.Activo, &u.Nombre, &u.Cargo, &u.Email, &encID)
+	u.EncargadoID = encID
+
 	return c.JSON(u)
 }
 
@@ -157,9 +210,7 @@ func ToggleUser(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "no puedes desactivar tu propia cuenta"})
 	}
 
-	res, err := database.DB.Exec(
-		"UPDATE users SET activo = NOT activo WHERE id = $1", id,
-	)
+	res, err := database.DB.Exec("UPDATE users SET activo = NOT activo WHERE id = $1", id)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -167,6 +218,9 @@ func ToggleUser(c *fiber.Ctx) error {
 	if affected == 0 {
 		return c.Status(404).JSON(fiber.Map{"error": "usuario no encontrado"})
 	}
+
+	// Sincronizar estado del encargado vinculado
+	database.DB.Exec("UPDATE encargados SET activo = NOT activo WHERE user_id = $1", id)
 
 	var activo bool
 	database.DB.QueryRow("SELECT activo FROM users WHERE id = $1", id).Scan(&activo)
