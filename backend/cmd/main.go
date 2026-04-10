@@ -48,6 +48,13 @@ func main() {
 	// Rutas protegidas por JWT
 	protected := api.Group("", middleware.Protected())
 
+	protected.Get("/me", handlers.GetMe)
+	protected.Get("/me/assets", handlers.GetMyAssets)
+
+	protected.Get("/tickets", handlers.GetTickets)
+	protected.Post("/tickets", handlers.CreateTicket)
+	protected.Put("/tickets/:id", middleware.AdminOrOperador(), handlers.UpdateTicket)
+
 	protected.Get("/dashboard", handlers.GetDashboard)
 	protected.Get("/items", handlers.GetItems)
 	protected.Get("/items/:id", handlers.GetItem)

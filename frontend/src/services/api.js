@@ -47,6 +47,15 @@ export const deleteItem = (id) => api.delete(`/items/${id}`);
 
 export const getDashboard = () => api.get('/dashboard').then((r) => r.data);
 
+// Perfil propio
+export const getMe = () => api.get('/me').then((r) => r.data);
+export const getMyAssets = () => api.get('/me/assets').then((r) => r.data);
+
+// Tickets
+export const getTickets = () => api.get('/tickets').then((r) => r.data);
+export const createTicket = (data) => api.post('/tickets', data).then((r) => r.data);
+export const updateTicket = (id, data) => api.put(`/tickets/${id}`, data).then((r) => r.data);
+
 // Encargados
 export const getEncargados = (all = false) =>
   api.get('/encargados', { params: all ? { all: 1 } : {} }).then((r) => r.data);

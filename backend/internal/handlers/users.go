@@ -173,11 +173,15 @@ func UpdateUser(c *fiber.Ctx) error {
 		return c.Status(404).JSON(fiber.Map{"error": "usuario no encontrado"})
 	}
 
-	// Actualizar encargado vinculado
-	database.DB.Exec(
-		"UPDATE encargados SET nombre=$1, cargo=$2, email=$3 WHERE user_id=$4",
-		body.Nombre, body.Cargo, body.Email, id,
-	)
+	// Upsert encargado vinculado (crear si no existe, actualizar si ya existe)
+	database.DB.Exec(`
+		INSERT INTO encargados (nombre, cargo, email, user_id)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (user_id) DO UPDATE
+		  SET nombre = EXCLUDED.nombre,
+		      cargo  = EXCLUDED.cargo,
+		      email  = EXCLUDED.email
+	`, body.Nombre, body.Cargo, body.Email, id)
 
 	var u models.User
 	var encID *int

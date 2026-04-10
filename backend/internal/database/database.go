@@ -67,6 +67,24 @@ func migrate() error {
 		details      TEXT    NOT NULL DEFAULT '{}',
 		encargado_id INTEGER REFERENCES encargados(id)
 	)`)
+	if err != nil {
+		return err
+	}
+
+	_, err = DB.Exec(`CREATE TABLE IF NOT EXISTS tickets (
+		id              SERIAL PRIMARY KEY,
+		titulo          TEXT        NOT NULL,
+		tipo_incidencia TEXT        NOT NULL,
+		descripcion     TEXT        NOT NULL DEFAULT '',
+		urgencia        TEXT        NOT NULL DEFAULT 'Media',
+		estado          TEXT        NOT NULL DEFAULT 'Abierto',
+		item_id         INTEGER     REFERENCES items(id) ON DELETE SET NULL,
+		user_id         INTEGER     NOT NULL REFERENCES users(id),
+		tecnico_id      INTEGER     REFERENCES users(id),
+		notas           TEXT        NOT NULL DEFAULT '',
+		created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	)`)
 	return err
 }
 

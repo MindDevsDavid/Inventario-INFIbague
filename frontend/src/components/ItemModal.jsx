@@ -190,7 +190,7 @@ export default function ItemModal({ category, item = null, onClose, onSaved }) {
             {/* Ubicación — se llena automáticamente con la oficina del encargado */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Localización <span className="text-red-500">*</span>
+                Oficina <span className="text-red-500">*</span>
               </label>
               <input
                 required
