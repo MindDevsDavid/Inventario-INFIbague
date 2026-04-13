@@ -21,7 +21,7 @@ export const CATEGORY_FIELDS = {
     { key: 'valor_compra',           label: 'Valor de Compra',                  type: 'number',   required: true,  placeholder: 'Ej: 1500000' },
     { key: 'fecha_compra',           label: 'Fecha de Compra',                  type: 'date',     required: true  },
     { key: 'tecnico_cargo',          label: 'Técnico a Cargo',                  type: 'text',     required: false, placeholder: 'Ej: Juan Pérez' },
-    { key: 'encargado_alternativo',  label: 'Nombre de Encargado Alternativo',  type: 'text',     required: false, placeholder: 'Ej: María García' },
+    { key: 'encargado_alternativo',  label: 'Técnico Alternativo',  type: 'text',     required: false, placeholder: 'Ej: María García' },
     { key: 'comentarios',            label: 'Comentarios',                      type: 'textarea', required: false, placeholder: 'Observaciones adicionales...' },
   ],
   Telefonos: [
@@ -33,7 +33,7 @@ export const CATEGORY_FIELDS = {
     { key: 'valor_compra',          label: 'Valor de Compra',                 type: 'number',   required: true,  placeholder: 'Ej: 400000' },
     { key: 'fecha_compra',          label: 'Fecha de Compra',                 type: 'date',     required: true  },
     { key: 'tecnico_cargo',         label: 'Técnico a Cargo',                 type: 'text',     required: false, placeholder: 'Ej: Juan Pérez' },
-    { key: 'encargado_alternativo', label: 'Nombre de Encargado Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
+    { key: 'encargado_alternativo', label: 'Técnico Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
     { key: 'comentarios',           label: 'Comentarios',                     type: 'textarea', required: false, placeholder: 'Observaciones adicionales...' },
   ],
   UPSs: [
@@ -46,7 +46,7 @@ export const CATEGORY_FIELDS = {
     { key: 'valor_compra',          label: 'Valor de Compra',                 type: 'number',   required: true,  placeholder: 'Ej: 600000' },
     { key: 'fecha_compra',          label: 'Fecha de Compra',                 type: 'date',     required: true  },
     { key: 'tecnico_cargo',         label: 'Técnico a Cargo',                 type: 'text',     required: false, placeholder: 'Ej: Juan Pérez' },
-    { key: 'encargado_alternativo', label: 'Nombre de Encargado Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
+    { key: 'encargado_alternativo', label: 'Técnico Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
     { key: 'comentarios',           label: 'Comentarios',                     type: 'textarea', required: false, placeholder: 'Observaciones adicionales...' },
   ],
   Licencias: [
@@ -55,7 +55,7 @@ export const CATEGORY_FIELDS = {
     { key: 'fabricante',            label: 'Fabricante',                      type: 'text',     required: true,  placeholder: 'Ej: Microsoft' },
     { key: 'valor_compra',          label: 'Valor de Compra',                 type: 'number',   required: true,  placeholder: 'Ej: 500000' },
     { key: 'fecha_compra',          label: 'Fecha de Compra',                 type: 'date',     required: true  },
-    { key: 'encargado_alternativo', label: 'Nombre de Encargado Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
+    { key: 'encargado_alternativo', label: 'Técnico Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
     { key: 'comentarios',           label: 'Comentarios',                     type: 'textarea', required: false, placeholder: 'Observaciones adicionales...' },
   ],
   Monitores: [
@@ -69,7 +69,7 @@ export const CATEGORY_FIELDS = {
     { key: 'valor_compra',          label: 'Valor de Compra',                 type: 'number',   required: true,  placeholder: 'Ej: 800000' },
     { key: 'fecha_compra',          label: 'Fecha de Compra',                 type: 'date',     required: true  },
     { key: 'tecnico_cargo',         label: 'Técnico a Cargo',                 type: 'text',     required: false, placeholder: 'Ej: Juan Pérez' },
-    { key: 'encargado_alternativo', label: 'Nombre de Encargado Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
+    { key: 'encargado_alternativo', label: 'Técnico Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
     { key: 'comentarios',           label: 'Comentarios',                     type: 'textarea', required: false, placeholder: 'Observaciones adicionales...' },
   ],
   Impresoras: [
@@ -83,7 +83,7 @@ export const CATEGORY_FIELDS = {
     { key: 'valor_compra',          label: 'Valor de Compra',                 type: 'number',   required: true,  placeholder: 'Ej: 900000' },
     { key: 'fecha_compra',          label: 'Fecha de Compra',                 type: 'date',     required: true  },
     { key: 'tecnico_cargo',         label: 'Técnico a Cargo',                 type: 'text',     required: false, placeholder: 'Ej: Juan Pérez' },
-    { key: 'encargado_alternativo', label: 'Nombre de Encargado Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
+    { key: 'encargado_alternativo', label: 'Técnico Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
     { key: 'comentarios',           label: 'Comentarios',                     type: 'textarea', required: false, placeholder: 'Observaciones adicionales...' },
   ],
   Escáneres: [
@@ -97,7 +97,7 @@ export const CATEGORY_FIELDS = {
     { key: 'valor_compra',          label: 'Valor de Compra',                 type: 'number',   required: true,  placeholder: 'Ej: 900000' },
     { key: 'fecha_compra',          label: 'Fecha de Compra',                 type: 'date',     required: true  },
     { key: 'tecnico_cargo',         label: 'Técnico a Cargo',                 type: 'text',     required: false, placeholder: 'Ej: Juan Pérez' },
-    { key: 'encargado_alternativo', label: 'Nombre de Encargado Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
+    { key: 'encargado_alternativo', label: 'Técnico Alternativo', type: 'text',     required: false, placeholder: 'Ej: María García' },
     { key: 'comentarios',           label: 'Comentarios',                     type: 'textarea', required: false, placeholder: 'Observaciones adicionales...' },
   ],
 };

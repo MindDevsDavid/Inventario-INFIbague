@@ -55,7 +55,7 @@ export default function TicketDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const role = sessionStorage.getItem('role');
-  const isOperator = role === 'operador' || role === 'admin';
+  const isOperator = role === 'tecnico' || role === 'admin';
   const isAdmin = role === 'admin';
 
   const [ticket, setTicket] = useState(null);
@@ -63,7 +63,7 @@ export default function TicketDetail() {
   const [tecnicos, setTecnicos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Acciones del operador
+  // Acciones del técnico
   const [editEstado, setEditEstado] = useState('');
   const [editUrgencia, setEditUrgencia] = useState('');
   const [editTecnico, setEditTecnico] = useState('');
@@ -198,45 +198,53 @@ export default function TicketDetail() {
                   </div>
                 </div>
 
-                {/* Acciones del operador */}
+                {/* Acciones del técnico */}
                 {isOperator && (
                   <div className="bg-surface rounded-3xl border border-surface-muted shadow-sm p-6">
                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Gestión</h3>
-                    <div className="flex flex-col gap-3">
-                      <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Estado</label>
-                        <select value={editEstado} onChange={(e) => setEditEstado(e.target.value)} className={INPUT}>
-                          {ESTADOS.map((e) => <option key={e}>{e}</option>)}
-                        </select>
+                    {ticket.estado === 'Cerrado' ? (
+                      <div className="text-center py-4">
+                        <span className="inline-flex rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-500">
+                          Ticket Cerrado
+                        </span>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Urgencia</label>
-                        <select value={editUrgencia} onChange={(e) => setEditUrgencia(e.target.value)} className={INPUT}>
-                          {URGENCIAS.map((u) => <option key={u}>{u}</option>)}
-                        </select>
-                      </div>
-                      {isAdmin && (
+                    ) : (
+                      <div className="flex flex-col gap-3">
                         <div>
-                          <label className="block text-xs font-medium text-slate-500 mb-1">Técnico asignado</label>
-                          <select value={editTecnico} onChange={(e) => setEditTecnico(e.target.value)} className={INPUT}>
-                            <option value="">Sin asignar</option>
-                            {tecnicos.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+                          <label className="block text-xs font-medium text-slate-500 mb-1">Estado</label>
+                          <select value={editEstado} onChange={(e) => setEditEstado(e.target.value)} className={INPUT}>
+                            {ESTADOS.map((e) => <option key={e}>{e}</option>)}
                           </select>
                         </div>
-                      )}
-                      <button
-                        onClick={handleSaveChanges}
-                        disabled={!hasChanges || saving}
-                        style={hasChanges ? { backgroundColor: '#033c63', color: '#fff' } : {}}
-                        className={`rounded-full py-2 text-sm font-medium transition ${
-                          hasChanges
-                            ? 'hover:opacity-90'
-                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                        }`}
-                      >
-                        {saving ? 'Guardando...' : 'Guardar cambios'}
-                      </button>
-                    </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500 mb-1">Urgencia</label>
+                          <select value={editUrgencia} onChange={(e) => setEditUrgencia(e.target.value)} className={INPUT}>
+                            {URGENCIAS.map((u) => <option key={u}>{u}</option>)}
+                          </select>
+                        </div>
+                        {isAdmin && (
+                          <div>
+                            <label className="block text-xs font-medium text-slate-500 mb-1">Técnico asignado</label>
+                            <select value={editTecnico} onChange={(e) => setEditTecnico(e.target.value)} className={INPUT}>
+                              <option value="">Sin asignar</option>
+                              {tecnicos.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+                            </select>
+                          </div>
+                        )}
+                        <button
+                          onClick={handleSaveChanges}
+                          disabled={!hasChanges || saving}
+                          style={hasChanges ? { backgroundColor: '#033c63', color: '#fff' } : {}}
+                          className={`rounded-full py-2 text-sm font-medium transition ${
+                            hasChanges
+                              ? 'hover:opacity-90'
+                              : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          }`}
+                        >
+                          {saving ? 'Guardando...' : 'Guardar cambios'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -332,7 +340,7 @@ export default function TicketDetail() {
                       </button>
                     </div>
                     {isOperator && noteType === 'nota_privada' && (
-                      <p className="text-xs text-slate-400 mt-2 ml-1">Esta nota solo será visible para operadores y administradores.</p>
+                      <p className="text-xs text-slate-400 mt-2 ml-1">Esta nota solo será visible para técnicos y administradores.</p>
                     )}
                   </form>
                 </div>

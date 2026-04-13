@@ -48,7 +48,7 @@ export default function Support() {
   const [search, setSearch] = useState('');
 
   const role = sessionStorage.getItem('role');
-  const isOperator = role === 'operador' || role === 'admin';
+  const isOperator = role === 'tecnico' || role === 'admin';
   const navigate = useNavigate();
 
   const load = () => getTickets().then(setTickets).catch(console.error);

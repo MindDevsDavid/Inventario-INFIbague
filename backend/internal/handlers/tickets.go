@@ -83,8 +83,8 @@ func GetMyAssets(c *fiber.Ctx) error {
 	username := claims["sub"].(string)
 	role, _ := claims["role"].(string)
 
-	// Admin y operador: todos los activos
-	if role == "admin" || role == "operador" {
+	// Admin y técnico: todos los activos
+	if role == "admin" || role == "tecnico" {
 		rows, err := database.DB.Query(`
 			SELECT i.id, i.name, i.category, i.quantity, i.location, i.details,
 			       i.encargado_id, COALESCE(e.nombre, '')
@@ -147,13 +147,13 @@ func GetMyAssets(c *fiber.Ctx) error {
 
 // ---------- /api/tecnicos ----------
 
-// GET /api/tecnicos — lista de operadores y admins para asignación
+// GET /api/tecnicos — lista de técnicos y admins para asignación
 func GetTecnicos(c *fiber.Ctx) error {
 	rows, err := database.DB.Query(`
 		SELECT u.id, u.username, COALESCE(e.nombre, u.username)
 		FROM users u
 		LEFT JOIN encargados e ON e.user_id = u.id
-		WHERE u.rol IN ('admin','operador') AND u.activo = true
+		WHERE u.rol IN ('admin','tecnico') AND u.activo = true
 		ORDER BY COALESCE(e.nombre, u.username)
 	`)
 	if err != nil {
@@ -227,7 +227,7 @@ func GetTickets(c *fiber.Ctx) error {
 		rows, err = database.DB.Query(
 			ticketSelect+` WHERE u.username = $1 ORDER BY t.created_at DESC`, username,
 		)
-	case "operador":
+	case "tecnico":
 		// Operador solo ve tickets asignados a él
 		rows, err = database.DB.Query(
 			ticketSelect+` WHERE t.tecnico_id = $1 ORDER BY t.created_at DESC`, userID,
@@ -270,7 +270,7 @@ func GetTicket(c *fiber.Ctx) error {
 		return c.Status(403).JSON(fiber.Map{"error": "acceso denegado"})
 	}
 	// Operador solo ve tickets asignados a él
-	if role == "operador" {
+	if role == "tecnico" {
 		if t.TecnicoID == nil || *t.TecnicoID != userID {
 			return c.Status(403).JSON(fiber.Map{"error": "acceso denegado"})
 		}
@@ -319,7 +319,7 @@ func CreateTicket(c *fiber.Ctx) error {
 	return c.Status(201).JSON(t)
 }
 
-// PUT /api/tickets/:id — operador/admin actualiza estado, urgencia, técnico
+// PUT /api/tickets/:id — técnico/admin actualiza estado, urgencia, técnico
 func UpdateTicket(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -338,10 +338,10 @@ func UpdateTicket(c *fiber.Ctx) error {
 	}
 
 	// Operador no puede cambiar el técnico asignado
-	if role == "operador" {
+	if role == "tecnico" {
 		var currentTecnicoID sql.NullInt64
 		database.DB.QueryRow("SELECT tecnico_id FROM tickets WHERE id=$1", id).Scan(&currentTecnicoID)
-		// Verificar que el ticket está asignado a este operador
+		// Verificar que el ticket está asignado a este técnico
 		if !currentTecnicoID.Valid || int(currentTecnicoID.Int64) != userID {
 			return c.Status(403).JSON(fiber.Map{"error": "acceso denegado"})
 		}
@@ -362,6 +362,11 @@ func UpdateTicket(c *fiber.Ctx) error {
 	database.DB.QueryRow(
 		"SELECT estado, urgencia, tecnico_id FROM tickets WHERE id=$1", id,
 	).Scan(&oldEstado, &oldUrgencia, &oldTecnicoID)
+
+	// No permitir cambios en tickets cerrados
+	if oldEstado == "Cerrado" {
+		return c.Status(400).JSON(fiber.Map{"error": "no se puede modificar un ticket cerrado"})
+	}
 
 	res, err := database.DB.Exec(`
 		UPDATE tickets SET estado=$1, urgencia=$2, tecnico_id=$3, updated_at=NOW()
@@ -430,7 +435,7 @@ func GetTicketHistory(c *fiber.Ctx) error {
 		if ticketOwner != userID {
 			return c.Status(403).JSON(fiber.Map{"error": "acceso denegado"})
 		}
-	} else if role == "operador" {
+	} else if role == "tecnico" {
 		var tecnicoID sql.NullInt64
 		database.DB.QueryRow("SELECT tecnico_id FROM tickets WHERE id=$1", id).Scan(&tecnicoID)
 		if !tecnicoID.Valid || int(tecnicoID.Int64) != userID {
@@ -500,7 +505,7 @@ func AddTicketNote(c *fiber.Ctx) error {
 		if ticketOwner != userID {
 			return c.Status(403).JSON(fiber.Map{"error": "acceso denegado"})
 		}
-	} else if role == "operador" {
+	} else if role == "tecnico" {
 		var tecnicoID sql.NullInt64
 		database.DB.QueryRow("SELECT tecnico_id FROM tickets WHERE id=$1", id).Scan(&tecnicoID)
 		if !tecnicoID.Valid || int(tecnicoID.Int64) != userID {

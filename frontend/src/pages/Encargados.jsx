@@ -15,7 +15,7 @@ export default function Encargados() {
   const [saving, setSaving] = useState(false);
 
   const role = sessionStorage.getItem('role');
-  const canEdit = role === 'admin' || role === 'operador';
+  const canEdit = role === 'admin' || role === 'tecnico';
   const navigate = useNavigate();
 
   const fetch = () => getEncargados(true).then(setList).catch(console.error);
@@ -57,7 +57,7 @@ export default function Encargados() {
       <div className="p-8">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-brand">Encargados</h1>
+            <h1 className="text-3xl font-bold text-brand">Técnicos</h1>
           </div>
 
           <div className="bg-surface rounded-3xl shadow-xl shadow-slate-200/60 overflow-hidden border border-surface-muted">
@@ -77,7 +77,7 @@ export default function Encargados() {
                 {list.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-400">
-                      No hay encargados registrados.
+                      No hay técnicos registrados.
                     </td>
                   </tr>
                 )}
@@ -135,7 +135,7 @@ export default function Encargados() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
             <h2 className="text-xl font-bold mb-6" style={{ color: '#033c63' }}>
-              Editar encargado
+              Editar técnico
             </h2>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div>

@@ -40,16 +40,16 @@ export default function EncargadoDetail() {
             onClick={() => navigate('/encargados')}
             className="mb-6 inline-flex items-center gap-2 text-sm text-slate-500 hover:text-brand transition"
           >
-            ← Volver a Encargados
+            ← Volver a Técnicos
           </button>
 
           {loading ? (
             <p className="text-slate-400 text-sm">Cargando...</p>
           ) : !encargado ? (
-            <p className="text-slate-400 text-sm">Encargado no encontrado.</p>
+            <p className="text-slate-400 text-sm">Técnico no encontrado.</p>
           ) : (
             <>
-              {/* Tarjeta del encargado */}
+              {/* Tarjeta del técnico */}
               <div className="bg-surface rounded-3xl shadow-xl shadow-slate-200/60 border border-surface-muted p-8 mb-8">
                 <div className="flex items-start justify-between">
                   <div>
@@ -71,7 +71,7 @@ export default function EncargadoDetail() {
               {/* Activos agrupados por categoría */}
               {items.length === 0 ? (
                 <div className="bg-surface rounded-3xl border border-surface-muted p-10 text-center text-sm text-slate-400">
-                  Este encargado no tiene activos asignados.
+                  Este técnico no tiene activos asignados.
                 </div>
               ) : (
                 Object.entries(byCategory).map(([category, catItems]) => (

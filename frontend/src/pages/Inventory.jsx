@@ -11,8 +11,8 @@ const Inventory = () => {
   const selectedCategory = searchParams.get('category');
 
   const role = sessionStorage.getItem('role');
-  const canAdd    = role === 'admin' || role === 'operador';
-  const canEdit   = role === 'admin' || role === 'operador';
+  const canAdd    = role === 'admin' || role === 'tecnico';
+  const canEdit   = role === 'admin' || role === 'tecnico';
   const canDelete = role === 'admin';
 
   const [modal, setModal] = useState(null);   // { mode: 'add'|'edit', category, item? }
@@ -134,7 +134,7 @@ const Inventory = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Placa</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Fabricante</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Encargado</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Técnico</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Oficina</th>
                     {(canEdit || canDelete) && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>

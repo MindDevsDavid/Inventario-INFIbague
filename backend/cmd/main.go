@@ -54,7 +54,7 @@ func main() {
 	protected.Get("/tickets", handlers.GetTickets)
 	protected.Get("/tickets/:id", handlers.GetTicket)
 	protected.Post("/tickets", handlers.CreateTicket)
-	protected.Put("/tickets/:id", middleware.AdminOrOperador(), handlers.UpdateTicket)
+	protected.Put("/tickets/:id", middleware.AdminOrTecnico(), handlers.UpdateTicket)
 	protected.Get("/tickets/:id/history", handlers.GetTicketHistory)
 	protected.Post("/tickets/:id/notes", handlers.AddTicketNote)
 	protected.Get("/tecnicos", handlers.GetTecnicos)
@@ -62,13 +62,13 @@ func main() {
 	protected.Get("/dashboard", handlers.GetDashboard)
 	protected.Get("/items", handlers.GetItems)
 	protected.Get("/items/:id", handlers.GetItem)
-	protected.Post("/items", middleware.AdminOrOperador(), handlers.CreateItem)
-	protected.Put("/items/:id", middleware.AdminOrOperador(), handlers.UpdateItem)
+	protected.Post("/items", middleware.AdminOrTecnico(), handlers.CreateItem)
+	protected.Put("/items/:id", middleware.AdminOrTecnico(), handlers.UpdateItem)
 	protected.Delete("/items/:id", middleware.AdminOnly(), handlers.DeleteItem)
 
 	protected.Get("/encargados", handlers.GetEncargados)
-	protected.Put("/encargados/:id", middleware.AdminOrOperador(), handlers.UpdateEncargado)
-	protected.Patch("/encargados/:id/toggle", middleware.AdminOrOperador(), handlers.ToggleEncargado)
+	protected.Put("/encargados/:id", middleware.AdminOrTecnico(), handlers.UpdateEncargado)
+	protected.Patch("/encargados/:id/toggle", middleware.AdminOrTecnico(), handlers.ToggleEncargado)
 
 	// Gestión de usuarios — solo admins
 	admin := protected.Group("", middleware.AdminOnly())
