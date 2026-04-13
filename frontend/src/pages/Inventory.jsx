@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import Navbar from '../components/Navbar';
 import ItemModal from '../components/ItemModal';
 import { getItems, deleteItem } from '../services/api';
@@ -37,7 +38,161 @@ const Inventory = () => {
 
   const handleGenerateReport = () => {
     const doc = new jsPDF();
-    doc.save('reporte_inventario.pdf');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const marginLeft = 14;
+    const marginRight = 14;
+    const contentWidth = pageWidth - marginLeft - marginRight;
+
+    const encargadoName = sessionStorage.getItem('encargado_nombre') || sessionStorage.getItem('username') || '';
+    const encargadoCargo = sessionStorage.getItem('encargado_cargo') || '';
+
+    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const hoy = new Date();
+    const fechaStr = `Ibague, ${String(hoy.getDate()).padStart(2,'0')} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
+
+    const addHeader = () => {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('INSTITUTO DE FINANCIAMIENTO, PROMOCION Y DESARROLLO DE IBAGUE', pageWidth / 2, 15, { align: 'center' });
+      doc.text('INFIBAGUE', pageWidth / 2, 20, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.text('NIT: 890.700.755.-5', pageWidth / 2, 25, { align: 'center' });
+    };
+
+    const addFooter = (pageNum, totalPages) => {
+      const footerY = pageHeight - 15;
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.5);
+      doc.line(marginLeft, footerY - 5, pageWidth - marginRight, footerY - 5);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.text(
+        'CLL. 60 CON CRA. 5a EDIF. CAMI NORTE B/ LA FLORESTA  TELEFONO: 2746888 - 2786888 - 2747444  FAX: 2746410',
+        pageWidth / 2, footerY - 1, { align: 'center' }
+      );
+      doc.text(
+        'E-MAIL: infibague@infibague.gov.co  WEB: www.infibague.gov.co  IBAGUE - TOLIMA',
+        pageWidth / 2, footerY + 3, { align: 'center' }
+      );
+      doc.setFontSize(8);
+      doc.text(`Pagina ${pageNum}/${totalPages}`, pageWidth / 2, footerY + 8, { align: 'center' });
+    };
+
+    // --- Página 1: encabezado completo ---
+    addHeader();
+
+    let y = 38;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('REPORTE DE RESPONSABILIDAD', pageWidth / 2, y, { align: 'center' });
+
+    y += 12;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FECHA:', marginLeft, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(fechaStr, marginLeft + 20, y);
+
+    y += 10;
+    doc.setFontSize(8);
+    doc.text(
+      'Conforme al ARTICULO 38 de la Ley 1952 de 2019 Codigo General Disciplinario. Deberes:',
+      marginLeft, y
+    );
+
+    y += 7;
+    const art22 = '22. Vigilar y salvaguardar los bienes y valores que le han sido encomendados y cuidar que sean utilizados debida y racionalmente, de conformidad con los fines a que han sido destinados';
+    const lines22 = doc.splitTextToSize(art22, contentWidth);
+    doc.text(lines22, marginLeft, y);
+    y += lines22.length * 4 + 3;
+
+    const art23 = '23. Responder por la conservacion de los utiles, equipos, muebles y bienes confiados a su guarda o administracion y rendir cuenta oportuna de su utilizacion.';
+    const lines23 = doc.splitTextToSize(art23, contentWidth);
+    doc.text(lines23, marginLeft, y);
+    y += lines23.length * 4 + 8;
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ACTIVOS EN RESPONSABILIDAD', pageWidth / 2, y, { align: 'center' });
+    y += 6;
+
+    // --- Tabla de activos ---
+    const tableData = filtered.map((item) => [
+      item.details?.placa || '—',
+      item.name,
+      item.details?.fecha_compra || '—',
+      item.details?.valor_compra
+        ? Number(item.details.valor_compra).toLocaleString('es-CO')
+        : '—',
+    ]);
+
+    autoTable(doc, {
+      startY: y,
+      head: [['PLACA', 'DESCRIPCION', 'F. COMPRA', 'VALOR']],
+      body: tableData,
+      margin: { left: marginLeft, right: marginRight, bottom: 30 },
+      styles: {
+        fontSize: 7.5,
+        cellPadding: 2,
+        lineColor: [0, 0, 0],
+        lineWidth: 0.3,
+        textColor: [0, 0, 0],
+      },
+      headStyles: {
+        fillColor: [255, 255, 255],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+        halign: 'center',
+        lineColor: [0, 0, 0],
+        lineWidth: 0.3,
+      },
+      bodyStyles: {
+        fillColor: [255, 255, 255],
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 28 },
+        1: { halign: 'center' },
+        2: { halign: 'center', cellWidth: 28 },
+        3: { halign: 'right', cellWidth: 28 },
+      },
+      didDrawPage: (data) => {
+        if (data.pageNumber > 1) {
+          addHeader();
+        }
+      },
+    });
+
+    // --- Página final: firma ---
+    const lastTablePage = doc.internal.getNumberOfPages();
+    const finalY = doc.lastAutoTable?.finalY || 150;
+
+    if (finalY > pageHeight - 70) {
+      doc.addPage();
+    }
+
+    const sigY = doc.internal.getNumberOfPages() === lastTablePage ? finalY + 30 : 50;
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    doc.line(marginLeft, sigY, marginLeft + 80, sigY);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(encargadoName.toUpperCase(), marginLeft, sigY + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    if (encargadoCargo) {
+      doc.text(encargadoCargo, marginLeft, sigY + 12);
+    }
+
+    // --- Agregar headers y footers a todas las páginas ---
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      if (i > 1) addHeader();
+      addFooter(i, totalPages);
+    }
+
+    doc.save('reporte_responsabilidad.pdf');
   };
 
 
@@ -68,20 +223,19 @@ const Inventory = () => {
 
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <h1 className="text-3xl font-bold text-brand">
-                Inventario {selectedCategory ? `— ${selectedCategory}` : ''}
-              </h1>
-              {isUsuario && (
-                <button
-                  onClick={handleGenerateReport}
-                  style={{ backgroundColor: '#033c63', color: '#fff' }}
-                  className="rounded-full px-5 py-2 text-sm font-medium hover:opacity-90 transition"
-                >
-                  Generar Reporte
-                </button>
-              )}
-            </div>
+            <h1 className="text-3xl font-bold text-brand">
+              Inventario {selectedCategory ? `— ${selectedCategory}` : ''}
+            </h1>
+
+            {isUsuario && (
+              <button
+                onClick={handleGenerateReport}
+                style={{ backgroundColor: '#033c63', color: '#fff' }}
+                className="rounded-full px-5 py-2 text-sm font-medium hover:opacity-90 transition"
+              >
+                Generar Reporte
+              </button>
+            )}
 
             {canAdd && (selectedCategory ? (
               <button

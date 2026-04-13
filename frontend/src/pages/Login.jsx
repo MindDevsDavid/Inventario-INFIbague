@@ -14,10 +14,12 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      const { token, role } = await login(username, password);
-      sessionStorage.setItem('token', token);
-      sessionStorage.setItem('role', role);
+      const data = await login(username, password);
+      sessionStorage.setItem('token', data.token);
+      sessionStorage.setItem('role', data.role);
       sessionStorage.setItem('username', username);
+      if (data.encargado_nombre) sessionStorage.setItem('encargado_nombre', data.encargado_nombre);
+      if (data.encargado_cargo) sessionStorage.setItem('encargado_cargo', data.encargado_cargo);
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Error al iniciar sesión');

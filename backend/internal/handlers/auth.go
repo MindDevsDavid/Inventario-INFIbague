@@ -51,5 +51,19 @@ func Login(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "error generando token"})
 	}
 
-	return c.JSON(fiber.Map{"token": tokenStr, "role": rol, "username": body.Username})
+	resp := fiber.Map{"token": tokenStr, "role": rol, "username": body.Username}
+
+	// Si es usuario, incluir datos del encargado vinculado
+	if rol == "usuario" {
+		var encNombre, encCargo string
+		errEnc := database.DB.QueryRow(
+			"SELECT e.nombre, COALESCE(e.cargo, '') FROM encargados e WHERE e.user_id = $1", id,
+		).Scan(&encNombre, &encCargo)
+		if errEnc == nil {
+			resp["encargado_nombre"] = encNombre
+			resp["encargado_cargo"] = encCargo
+		}
+	}
+
+	return c.JSON(resp)
 }
