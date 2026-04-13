@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ItemModal from '../components/ItemModal';
 import { getItems, deleteItem } from '../services/api';
-import { CATEGORIES } from '../config/categoryFields';
+import { CATEGORIES, CATEGORY_FIELDS } from '../config/categoryFields';
 
 const Inventory = () => {
   const [items, setItems] = useState([]);
@@ -16,6 +16,7 @@ const Inventory = () => {
   const canDelete = role === 'admin';
 
   const [modal, setModal] = useState(null);   // { mode: 'add'|'edit', category, item? }
+  const [detailItem, setDetailItem] = useState(null); // item para modal de detalle (usuario)
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -134,7 +135,7 @@ const Inventory = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Placa</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Fabricante</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Técnico</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Encargado</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Oficina</th>
                     {(canEdit || canDelete) && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
@@ -150,7 +151,17 @@ const Inventory = () => {
                     </tr>
                   )}
                   {filtered.map((item) => (
-                    <tr key={item.id}>
+                    <tr
+                      key={item.id}
+                      onClick={() => {
+                        if (canEdit) {
+                          setModal({ mode: 'edit', category: item.category, item });
+                        } else {
+                          setDetailItem(item);
+                        }
+                      }}
+                      className="cursor-pointer hover:bg-slate-50 transition"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium">{item.name}</td>
                       {!selectedCategory && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.category}</td>
@@ -170,7 +181,7 @@ const Inventory = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.encargado || '—'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{item.location}</td>
                       {(canEdit || canDelete) && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm" onClick={(e) => e.stopPropagation()}>
                           <div className="flex gap-2">
                             {canEdit && (
                               <button
@@ -211,6 +222,51 @@ const Inventory = () => {
           onClose={() => setModal(null)}
           onSaved={fetchItems}
         />
+      )}
+
+      {/* Modal detalle (solo lectura — usuarios) */}
+      {detailItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold" style={{ color: '#033c63' }}>{detailItem.name}</h2>
+              <span className="text-xs text-slate-400 bg-slate-100 rounded-full px-3 py-1">{detailItem.category}</span>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <span className="text-sm text-slate-400">Encargado</span>
+                <span className="text-sm text-slate-700">{detailItem.encargado || '—'}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <span className="text-sm text-slate-400">Oficina</span>
+                <span className="text-sm text-slate-700">{detailItem.location || '—'}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <span className="text-sm text-slate-400">Cantidad</span>
+                <span className="text-sm text-slate-700">{detailItem.quantity}</span>
+              </div>
+
+              {(CATEGORY_FIELDS[detailItem.category] || []).map((field) => {
+                const val = detailItem.details?.[field.key];
+                if (!val && val !== 0) return null;
+                return (
+                  <div key={field.key} className="flex justify-between border-b border-slate-100 pb-2">
+                    <span className="text-sm text-slate-400">{field.label}</span>
+                    <span className="text-sm text-slate-700 text-right max-w-[60%]">{val}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setDetailItem(null)}
+              className="mt-6 w-full rounded-full border border-slate-200 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Confirmar eliminación */}

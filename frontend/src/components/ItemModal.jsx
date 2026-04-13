@@ -40,7 +40,7 @@ export default function ItemModal({ category, item = null, onClose, onSaved }) {
       }
     }
     if (config.requireEncargado && !form.encargado_id) {
-      setError('El campo "Técnico" es obligatorio.');
+      setError('El campo "Encargado" es obligatorio.');
       return;
     }
 
@@ -159,10 +159,10 @@ export default function ItemModal({ category, item = null, onClose, onSaved }) {
               />
             </div>
 
-            {/* Técnico */}
+            {/* Encargado */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Técnico
+                Encargado
                 {config.requireEncargado
                   ? <span className="text-red-500 ml-1">*</span>
                   : <span className="text-slate-400 text-xs ml-1">(opcional)</span>
@@ -197,7 +197,7 @@ export default function ItemModal({ category, item = null, onClose, onSaved }) {
                 readOnly
                 value={form.location}
                 className={`${INPUT_CLASS} bg-slate-50 text-slate-500 cursor-not-allowed`}
-                placeholder="Se completa al seleccionar un técnico"
+                placeholder="Se completa al seleccionar un encargado"
               />
             </div>
 

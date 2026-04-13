@@ -15,8 +15,8 @@ func validateItem(item *models.Item) string {
 	item.Name = strings.TrimSpace(item.Name)
 	item.Category = strings.TrimSpace(item.Category)
 	item.Location = strings.TrimSpace(item.Location)
-	if item.Name == "" || item.Category == "" || item.Location == "" {
-		return "nombre, categoría y ubicación son obligatorios"
+	if item.Name == "" || item.Category == "" {
+		return "nombre y categoría son obligatorios"
 	}
 	if len(item.Name) > 200 {
 		return "nombre demasiado largo (máx 200 caracteres)"
@@ -62,11 +62,17 @@ func GetItems(c *fiber.Ctx) error {
 		role, _ := claims["role"].(string)
 		if role == "usuario" {
 			username, _ := claims["sub"].(string)
-			var oficina string
-			err := database.DB.QueryRow("SELECT oficina FROM users WHERE username = $1", username).Scan(&oficina)
-			if err == nil && oficina != "" {
-				args = append(args, oficina)
-				conditions = append(conditions, "i.location = $"+strconv.Itoa(len(args)))
+			var encID sql.NullInt64
+			database.DB.QueryRow(
+				"SELECT e.id FROM encargados e JOIN users u ON e.user_id = u.id WHERE u.username = $1",
+				username,
+			).Scan(&encID)
+			if encID.Valid {
+				args = append(args, encID.Int64)
+				conditions = append(conditions, "i.encargado_id = $"+strconv.Itoa(len(args)))
+			} else {
+				// Sin encargado vinculado: no ve nada
+				return c.JSON([]models.Item{})
 			}
 		}
 	}
@@ -195,9 +201,31 @@ func DeleteItem(c *fiber.Ctx) error {
 
 // GET /api/dashboard
 func GetDashboard(c *fiber.Ctx) error {
-	rows, err := database.DB.Query(
-		"SELECT category, COUNT(*), SUM(quantity) FROM items GROUP BY category",
-	)
+	query := "SELECT category, COUNT(*), SUM(quantity) FROM items"
+	args := []any{}
+
+	claims, _ := c.Locals("claims").(jwt.MapClaims)
+	if claims != nil {
+		role, _ := claims["role"].(string)
+		if role == "usuario" {
+			username, _ := claims["sub"].(string)
+			var encID sql.NullInt64
+			database.DB.QueryRow(
+				"SELECT e.id FROM encargados e JOIN users u ON e.user_id = u.id WHERE u.username = $1",
+				username,
+			).Scan(&encID)
+			if encID.Valid {
+				query += " WHERE encargado_id = $1"
+				args = append(args, encID.Int64)
+			} else {
+				return c.JSON(map[string]fiber.Map{})
+			}
+		}
+	}
+
+	query += " GROUP BY category"
+
+	rows, err := database.DB.Query(query, args...)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
