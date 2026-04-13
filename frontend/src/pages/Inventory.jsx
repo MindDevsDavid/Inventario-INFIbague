@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import jsPDF from 'jspdf';
 import Navbar from '../components/Navbar';
 import ItemModal from '../components/ItemModal';
 import { getItems, deleteItem } from '../services/api';
@@ -11,6 +12,7 @@ const Inventory = () => {
   const selectedCategory = searchParams.get('category');
 
   const role = sessionStorage.getItem('role');
+  const isUsuario = role === 'usuario';
   const canAdd    = role === 'admin' || role === 'tecnico';
   const canEdit   = role === 'admin' || role === 'tecnico';
   const canDelete = role === 'admin';
@@ -31,6 +33,11 @@ const Inventory = () => {
     await deleteItem(confirmDelete).catch(console.error);
     setConfirmDelete(null);
     fetchItems();
+  };
+
+  const handleGenerateReport = () => {
+    const doc = new jsPDF();
+    doc.save('reporte_inventario.pdf');
   };
 
 
@@ -61,9 +68,20 @@ const Inventory = () => {
 
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-brand">
-              Inventario {selectedCategory ? `— ${selectedCategory}` : ''}
-            </h1>
+            <div className="flex items-center gap-4">
+              <h1 className="text-3xl font-bold text-brand">
+                Inventario {selectedCategory ? `— ${selectedCategory}` : ''}
+              </h1>
+              {isUsuario && (
+                <button
+                  onClick={handleGenerateReport}
+                  style={{ backgroundColor: '#033c63', color: '#fff' }}
+                  className="rounded-full px-5 py-2 text-sm font-medium hover:opacity-90 transition"
+                >
+                  Generar Reporte
+                </button>
+              )}
+            </div>
 
             {canAdd && (selectedCategory ? (
               <button
