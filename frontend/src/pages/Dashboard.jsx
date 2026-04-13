@@ -8,6 +8,8 @@ const Dashboard = () => {
   const [summary, setSummary] = useState({});
   const [addCategory, setAddCategory] = useState(null);
 
+  const isUsuario = sessionStorage.getItem('role') === 'usuario';
+
   const fetchSummary = () => getDashboard().then(setSummary).catch(console.error);
 
   useEffect(() => { fetchSummary(); }, []);
@@ -27,13 +29,15 @@ const Dashboard = () => {
                     {summary[cat]?.items ?? '—'}
                   </p>
                   <p className="text-sm font-medium text-slate-700">{cat}</p>
-                  <button
-                    onClick={() => setAddCategory(cat)}
-                    style={{ backgroundColor: '#033c63', color: '#fff' }}
-                    className="w-full rounded-full py-1.5 text-xs font-medium hover:opacity-90 transition"
-                  >
-                    + Agregar
-                  </button>
+                  {!isUsuario && (
+                    <button
+                      onClick={() => setAddCategory(cat)}
+                      style={{ backgroundColor: '#033c63', color: '#fff' }}
+                      className="w-full rounded-full py-1.5 text-xs font-medium hover:opacity-90 transition"
+                    >
+                      + Agregar
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

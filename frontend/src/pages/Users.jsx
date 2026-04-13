@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import { getUsers, createUser, updateUser, toggleUser } from '../services/api';
 
-const EMPTY = { username: '', password: '', rol: 'usuario', nombre: '', cargo: '', email: '' };
+const EMPTY = { username: '', password: '', rol: 'usuario', nombre: '', cargo: '', email: '', oficina: '' };
 const INPUT = 'w-full rounded-xl border border-slate-200 px-4 py-2 text-sm outline-none focus:border-[#033c63] transition';
 
 const ROL_BADGE = {
@@ -26,7 +26,7 @@ export default function Users() {
 
   const openAdd = () => { setForm(EMPTY); setError(''); setModal('add'); };
   const openEdit = (u) => {
-    setForm({ username: u.username, password: '', rol: u.rol, nombre: u.nombre || '', cargo: u.cargo || '', email: u.email || '' });
+    setForm({ username: u.username, password: '', rol: u.rol, nombre: u.nombre || '', cargo: u.cargo || '', email: u.email || '', oficina: u.oficina || '' });
     setEditId(u.id);
     setError('');
     setModal('edit');
@@ -102,7 +102,7 @@ export default function Users() {
                           <span className="ml-2 text-xs text-slate-400">(tú)</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{u.cargo || '—'}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{u.oficina || '—'}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{u.email || '—'}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${ROL_BADGE[u.rol] || ''}`}>
@@ -169,13 +169,23 @@ export default function Users() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Oficina <span className="text-slate-400 text-xs">(opcional)</span>
                 </label>
-                <select value={form.cargo} onChange={(e) => set('cargo', e.target.value)} className={INPUT}>
+                <select value={form.oficina} onChange={(e) => set('oficina', e.target.value)} className={INPUT}>
                   <option value="">— Sin asignar —</option>
                   <option>Gerencia</option>
-                  <option>Contabilidad</option>
-                  <option>Sistemas</option>
+                  <option>Gerencia General</option>
+                  <option>Oficina Contabilidad</option>
+                  <option>Area TI</option>
                   <option>Recursos Humanos</option>
-                  <option>Soporte Técnico</option>
+                  <option>Area Ventas</option>
+                  <option>Area Juridica</option>
+                  <option>Area Diseno</option>
+                  <option>Recepcion</option>
+                  <option>Almacen</option>
+                  <option>Seguridad</option>
+                  <option>Central Telefonica</option>
+                  <option>Piso 2 Networking</option>
+                  <option>Direccion</option>
+                  <option>Sistemas</option>
                 </select>
               </div>
               <div>

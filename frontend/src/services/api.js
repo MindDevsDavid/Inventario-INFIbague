@@ -63,8 +63,12 @@ export const addTicketNote = (id, data) => api.post(`/tickets/${id}/notes`, data
 export const getTecnicos = () => api.get('/tecnicos').then((r) => r.data);
 
 // Encargados
-export const getEncargados = (all = false) =>
-  api.get('/encargados', { params: all ? { all: 1 } : {} }).then((r) => r.data);
+export const getEncargados = (all = false, tecnicos = false) => {
+  const params = {};
+  if (all) params.all = 1;
+  if (tecnicos) params.tecnicos = 1;
+  return api.get('/encargados', { params }).then((r) => r.data);
+};
 
 export const createEncargado = (data) => api.post('/encargados', data).then((r) => r.data);
 

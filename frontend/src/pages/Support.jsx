@@ -84,7 +84,7 @@ export default function Support() {
     abierto:   tickets.filter((t) => t.estado === 'Abierto').length,
     proceso:   tickets.filter((t) => t.estado === 'En Proceso').length,
     esperando: tickets.filter((t) => t.estado === 'Esperando respuesta' || t.estado === 'Esperando repuesto').length,
-    resuelto:  tickets.filter((t) => t.estado === 'Resuelto').length,
+    resuelto:  tickets.filter((t) => t.estado === 'Resuelto' || t.estado === 'Cerrado').length,
   };
 
   const INPUT_F = 'rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#033c63] transition';

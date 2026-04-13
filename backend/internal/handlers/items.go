@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func validateItem(item *models.Item) string {
@@ -55,6 +56,21 @@ func GetItems(c *fiber.Ctx) error {
 	query := selectItems
 	args := []any{}
 	conditions := []string{}
+
+	claims, _ := c.Locals("claims").(jwt.MapClaims)
+	if claims != nil {
+		role, _ := claims["role"].(string)
+		if role == "usuario" {
+			username, _ := claims["sub"].(string)
+			var oficina string
+			err := database.DB.QueryRow("SELECT oficina FROM users WHERE username = $1", username).Scan(&oficina)
+			if err == nil && oficina != "" {
+				args = append(args, oficina)
+				conditions = append(conditions, "i.location = $"+strconv.Itoa(len(args)))
+			}
+		}
+	}
+
 	if category != "" {
 		args = append(args, category)
 		conditions = append(conditions, "i.category = $"+strconv.Itoa(len(args)))

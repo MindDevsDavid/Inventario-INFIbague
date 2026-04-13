@@ -9,11 +9,20 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// GET /api/encargados?all=1
+// GET /api/encargados?all=1&tecnicos=1
 func GetEncargados(c *fiber.Ctx) error {
+	esTecnico := c.Query("tecnicos") == "1"
 	query := "SELECT id, nombre, cargo, email, activo FROM encargados"
+	conditions := []string{}
+
+	if esTecnico {
+		conditions = append(conditions, "user_id IS NOT NULL AND (SELECT rol FROM users WHERE id = encargados.user_id) = 'tecnico'")
+	}
 	if c.Query("all") != "1" {
-		query += " WHERE activo = true"
+		conditions = append(conditions, "activo = true")
+	}
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
 	query += " ORDER BY nombre ASC"
 

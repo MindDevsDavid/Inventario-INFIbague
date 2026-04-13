@@ -18,7 +18,7 @@ export default function Encargados() {
   const canEdit = role === 'admin' || role === 'tecnico';
   const navigate = useNavigate();
 
-  const fetch = () => getEncargados(true).then(setList).catch(console.error);
+  const fetch = () => getEncargados(true, true).then(setList).catch(console.error);
   useEffect(() => { fetch(); }, []);
 
   const openEdit = (e) => {

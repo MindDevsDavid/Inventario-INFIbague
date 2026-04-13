@@ -14,7 +14,7 @@ import (
 // GET /api/users — incluye datos del encargado vinculado
 func GetUsers(c *fiber.Ctx) error {
 	rows, err := database.DB.Query(`
-		SELECT u.id, u.username, u.rol, u.activo,
+		SELECT u.id, u.username, u.rol, u.activo, COALESCE(u.oficina, ''),
 		       COALESCE(e.nombre, ''), COALESCE(e.cargo, ''), COALESCE(e.email, ''),
 		       e.id
 		FROM users u
@@ -30,7 +30,7 @@ func GetUsers(c *fiber.Ctx) error {
 	for rows.Next() {
 		var u models.User
 		var encID *int
-		if err := rows.Scan(&u.ID, &u.Username, &u.Rol, &u.Activo,
+		if err := rows.Scan(&u.ID, &u.Username, &u.Rol, &u.Activo, &u.Oficina,
 			&u.Nombre, &u.Cargo, &u.Email, &encID); err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 		}
@@ -49,6 +49,7 @@ func CreateUser(c *fiber.Ctx) error {
 		Nombre   string `json:"nombre"`
 		Cargo    string `json:"cargo"`
 		Email    string `json:"email"`
+		Oficina  string `json:"oficina"`
 	}
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "datos inválidos"})
@@ -58,6 +59,7 @@ func CreateUser(c *fiber.Ctx) error {
 	body.Nombre = strings.TrimSpace(body.Nombre)
 	body.Cargo = strings.TrimSpace(body.Cargo)
 	body.Email = strings.TrimSpace(body.Email)
+	body.Oficina = strings.TrimSpace(body.Oficina)
 
 	if body.Username == "" || body.Password == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "usuario y contraseña son obligatorios"})
@@ -79,8 +81,8 @@ func CreateUser(c *fiber.Ctx) error {
 
 	var u models.User
 	err = database.DB.QueryRow(
-		"INSERT INTO users (username, password_hash, rol) VALUES ($1, $2, $3) RETURNING id, username, rol, activo",
-		body.Username, string(hash), body.Rol,
+		"INSERT INTO users (username, password_hash, rol, oficina) VALUES ($1, $2, $3, $4) RETURNING id, username, rol, activo",
+		body.Username, string(hash), body.Rol, body.Oficina,
 	).Scan(&u.ID, &u.Username, &u.Rol, &u.Activo)
 	if err != nil {
 		if strings.Contains(err.Error(), "unique") {
@@ -99,6 +101,7 @@ func CreateUser(c *fiber.Ctx) error {
 	u.Nombre = body.Nombre
 	u.Cargo = body.Cargo
 	u.Email = body.Email
+	u.Oficina = body.Oficina
 	u.EncargadoID = &encID
 
 	return c.Status(201).JSON(u)
@@ -118,6 +121,7 @@ func UpdateUser(c *fiber.Ctx) error {
 		Nombre   string `json:"nombre"`
 		Cargo    string `json:"cargo"`
 		Email    string `json:"email"`
+		Oficina  string `json:"oficina"`
 	}
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "datos inválidos"})
@@ -127,6 +131,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	body.Nombre = strings.TrimSpace(body.Nombre)
 	body.Cargo = strings.TrimSpace(body.Cargo)
 	body.Email = strings.TrimSpace(body.Email)
+	body.Oficina = strings.TrimSpace(body.Oficina)
 
 	if body.Username == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "el nombre de usuario es obligatorio"})
@@ -159,8 +164,8 @@ func UpdateUser(c *fiber.Ctx) error {
 	}
 
 	res, err := database.DB.Exec(
-		"UPDATE users SET username = $1, rol = $2 WHERE id = $3",
-		body.Username, body.Rol, id,
+		"UPDATE users SET username = $1, rol = $2, oficina = $3 WHERE id = $4",
+		body.Username, body.Rol, body.Oficina, id,
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "unique") {
@@ -186,13 +191,13 @@ func UpdateUser(c *fiber.Ctx) error {
 	var u models.User
 	var encID *int
 	database.DB.QueryRow(`
-		SELECT u.id, u.username, u.rol, u.activo,
+		SELECT u.id, u.username, u.rol, u.activo, COALESCE(u.oficina, ''),
 		       COALESCE(e.nombre, ''), COALESCE(e.cargo, ''), COALESCE(e.email, ''),
 		       e.id
 		FROM users u
 		LEFT JOIN encargados e ON e.user_id = u.id
 		WHERE u.id = $1
-	`, id).Scan(&u.ID, &u.Username, &u.Rol, &u.Activo, &u.Nombre, &u.Cargo, &u.Email, &encID)
+	`, id).Scan(&u.ID, &u.Username, &u.Rol, &u.Activo, &u.Oficina, &u.Nombre, &u.Cargo, &u.Email, &encID)
 	u.EncargadoID = encID
 
 	return c.JSON(u)

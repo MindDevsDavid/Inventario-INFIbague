@@ -8,5 +8,6 @@ type User struct {
 	Nombre      string `json:"nombre"`
 	Cargo       string `json:"cargo"`
 	Email       string `json:"email"`
+	Oficina     string `json:"oficina"`
 	EncargadoID *int   `json:"encargado_id,omitempty"`
 }

@@ -16,6 +16,8 @@ const Navbar = () => {
   const timeoutRef = useRef(null);
   const navigate = useNavigate();
   const isAdmin = sessionStorage.getItem('role') === 'admin';
+  const isUsuario = sessionStorage.getItem('role') === 'usuario';
+  const isOperador = sessionStorage.getItem('role') === 'admin' || sessionStorage.getItem('role') === 'tecnico';
 
   const handleLogout = () => {
     sessionStorage.clear();
@@ -69,12 +71,23 @@ const Navbar = () => {
             )}
           </div>
 
-          <Link
-            to="/encargados"
-            className="inline-flex items-center rounded-full border border-surface/20 bg-surface px-4 py-2 text-sm font-medium text-slate-700"
-          >
-            Técnicos
-          </Link>
+          {!isUsuario && (
+            <Link
+              to="/encargados"
+              className="inline-flex items-center rounded-full border border-surface/20 bg-surface px-4 py-2 text-sm font-medium text-slate-700"
+            >
+              Técnicos
+            </Link>
+          )}
+
+          {isOperador && (
+            <Link
+              to="/usuarios-lista"
+              className="inline-flex items-center rounded-full border border-surface/20 bg-surface px-4 py-2 text-sm font-medium text-slate-700"
+            >
+              Encargados
+            </Link>
+          )}
 
           {isAdmin && (
             <Link
