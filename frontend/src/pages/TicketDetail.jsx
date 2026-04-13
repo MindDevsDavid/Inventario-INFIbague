@@ -215,6 +215,11 @@ export default function TicketDetail() {
                           <select value={editEstado} onChange={(e) => setEditEstado(e.target.value)} className={INPUT}>
                             {ESTADOS.map((e) => <option key={e}>{e}</option>)}
                           </select>
+                          {editEstado === 'Cerrado' && (
+                            <p className="mt-2 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+                              ⚠️ Un ticket cerrado no se puede volver a abrir.
+                            </p>
+                          )}
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-slate-500 mb-1">Urgencia</label>
